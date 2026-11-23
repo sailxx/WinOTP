@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../WinOTP/Models/Account.cs" Link="Models/Account.cs" />
+    <Compile Include="../WinOTP/Services/Otp.cs" Link="Services/Otp.cs" />
+    <Compile Include="../WinOTP/Services/OtpUriParser.cs" Link="Services/OtpUriParser.cs" />
+    <Compile Include="../WinOTP/Services/MigrationParser.cs" Link="Services/MigrationParser.cs" />
+    <Compile Include="../WinOTP/Services/AegisImporter.cs" Link="Services/AegisImporter.cs" />
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.7.0" />
+  </ItemGroup>
+</Project>

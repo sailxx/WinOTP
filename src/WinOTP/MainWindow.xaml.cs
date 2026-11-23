@@ -25,44 +25,37 @@ public sealed partial class MainWindow : Window
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(500) };
     private readonly Dictionary<Guid, (TextBlock Code, TextBlock Time)> _cardLabels = [];
     private readonly Dictionary<Guid, long> _codeSteps = [];
+    private readonly Dictionary<Guid, ProgressBar> _countdowns = [];
     private DateTime _lastActivity = DateTime.Now;
     private bool _locked;
     private bool _loadFailed;
     public MainWindow()
     {
         InitializeComponent();
-        SystemBackdrop = null;
+        SystemBackdrop = new MicaBackdrop { Kind = Microsoft.UI.Composition.SystemBackdrops.MicaKind.BaseAlt };
         var windowHandle = WindowNative.GetWindowHandle(this);
         var appWindow = AppWindow.GetFromWindowId(Microsoft.UI.Win32Interop.GetWindowIdFromWindow(windowHandle));
-        var titleBar = appWindow.TitleBar;
-        titleBar.IconShowOptions = IconShowOptions.ShowIconAndSystemMenu;
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(WindowTitleBar);
+        appWindow.TitleBar.IconShowOptions = IconShowOptions.HideIconAndSystemMenu;
         var iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "WinOTP.ico");
         if (File.Exists(iconPath)) appWindow.SetIcon(iconPath);
-        if (AppWindowTitleBar.IsCustomizationSupported())
+        RootGrid.ActualThemeChanged += (_, _) => { ApplyTitleBarTheme(); RenderAccounts(); };
+        ApplyTitleBarTheme();
+        appWindow.Resize(new SizeInt32(540, 660));
+        if (appWindow.Presenter is OverlappedPresenter presenter)
         {
-            titleBar.BackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 0, 0, 0);
-            titleBar.ForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 235, 235, 235);
-            titleBar.InactiveBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 0, 0, 0);
-            titleBar.InactiveForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 170, 170, 170);
-            titleBar.ButtonBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 0, 0, 0);
-            titleBar.ButtonForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 235, 235, 235);
-            titleBar.ButtonHoverBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 38, 38, 38);
-            titleBar.ButtonHoverForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 255, 255, 255);
-            titleBar.ButtonPressedBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 65, 65, 65);
-            titleBar.ButtonPressedForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 255, 255, 255);
-            titleBar.ButtonInactiveBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 0, 0, 0);
-            titleBar.ButtonInactiveForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 170, 170, 170);
+            presenter.PreferredMinimumWidth = 500;
+            presenter.PreferredMinimumHeight = 480;
         }
-        appWindow.Resize(new SizeInt32(660, 700));
-        var version = typeof(App).Assembly.GetName().Version;
-        VersionText.Text = version is null ? "v0.3.1" : $"v{version.Major}.{version.Minor}.{Math.Max(version.Build, 0)}";
+        _tray = new TrayIcon(windowHandle, iconPath, () => { appWindow.Show(); Activate(); });
+        Closed += (_, _) => { _timer.Stop(); _tray.Dispose(); };
         ShowCodesButton.Content = _settings.HideCodes ? "Show codes" : "Hide codes";
         if (Content is UIElement root) { root.PointerPressed += (_, _) => Touch(); root.KeyDown += (_, _) => Touch(); }
         _timer.Tick += async (_, _) =>
         {
             try
             {
-                ClockText.Text = DateTime.Now.ToString("HH:mm:ss");
                 if (!_locked && _settings.HasPassword && _settings.AutoLockMinutes > 0 && DateTime.Now - _lastActivity >= TimeSpan.FromMinutes(_settings.AutoLockMinutes)) await LockAndUnlock();
                 else UpdateCodes();
             }
@@ -115,8 +108,7 @@ public sealed partial class MainWindow : Window
         var q = SearchBox.Text.Trim();
         var visible = _accounts.Where(a => q.Length == 0 || a.Issuer.Contains(q, StringComparison.OrdinalIgnoreCase) || a.Name.Contains(q, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(a => a.Favorite).ThenBy(a => a.Issuer).ThenBy(a => a.Name).ToList();
-        AccountList.Children.Clear(); _cardLabels.Clear(); _codeSteps.Clear();
-        CountText.Text = $"{_accounts.Count} ACCOUNTS · LOCAL";
+        AccountList.Children.Clear(); _cardLabels.Clear(); _codeSteps.Clear(); _countdowns.Clear();
         foreach (var account in visible) AccountList.Children.Add(BuildCard(account));
         if (visible.Count == 0)
         {
@@ -134,17 +126,17 @@ public sealed partial class MainWindow : Window
         var isHotp = string.Equals(a.Type, "HOTP", StringComparison.OrdinalIgnoreCase);
         var remaining = isHotp ? "Updated on copy" : a.Period > 0 ? $"Refreshes in {a.Period - DateTimeOffset.UtcNow.ToUnixTimeSeconds() % a.Period}s" : "Invalid TOTP period";
         var title = new TextBlock { Text = a.Issuer, FontSize = 15, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = Brush("#EEEEEE") };
-        var name = new TextBlock { Text = a.Name, FontSize = 12, Foreground = Brush("#777777") };
-        var codeBlock = new TextBlock { Text = _settings.HideCodes ? new string('•', a.Digits) : code, FontFamily = new FontFamily("ms-appx:///Assets/Fonts/CascadiaCode.ttf#Cascadia Code"), FontSize = 27, CharacterSpacing = 0, FontWeight = Microsoft.UI.Text.FontWeights.Medium, Foreground = error.Length > 0 ? Brush("#B0B0B0") : Brush("#F1F1F1"), VerticalAlignment = VerticalAlignment.Center };
+        var name = new TextBlock { Text = a.Name, FontSize = 12, Foreground = Brush("#C4D4DE") };
+        var codeBlock = new TextBlock { Text = _settings.HideCodes ? new string('•', a.Digits) : code, FontFamily = new FontFamily("Segoe UI Variable"), FontSize = 28, CharacterSpacing = 100, Foreground = error.Length > 0 ? Brush("#B0B0B0") : Brush("#83E7FF"), VerticalAlignment = VerticalAlignment.Center };
         var metadata = new StackPanel { Spacing = 5, VerticalAlignment = VerticalAlignment.Center };
         metadata.Children.Add(title); metadata.Children.Add(name);
         var codeStack = new StackPanel { Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
-        var timeBlock = new TextBlock { Text = error.Length > 0 ? error : remaining, FontSize = 10, Foreground = Brush("#929292") };
+        var timeBlock = new TextBlock { Text = error.Length > 0 ? error : remaining, FontSize = 10, Foreground = Brush("#B6CAD6") };
         codeStack.Children.Add(codeBlock); codeStack.Children.Add(timeBlock);
         _cardLabels[a.Id] = (codeBlock, timeBlock);
         _codeSteps[a.Id] = isHotp ? a.Counter : a.Period > 0 ? DateTimeOffset.UtcNow.ToUnixTimeSeconds() / a.Period : long.MinValue;
         var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5, VerticalAlignment = VerticalAlignment.Center };
-        var copy = new Button { Content = "Copy code", Background = Brush("#171717"), Foreground = Brush("#E0E0E0"), CornerRadius = new CornerRadius(10), Padding = new Thickness(11, 8, 11, 8), IsEnabled = error.Length == 0, FontFamily = new FontFamily("ms-appx:///Assets/Fonts/CascadiaCode.ttf#Cascadia Code") };
+        var copy = new Button { Content = "Copy code", Background = Brush("#171717"), Foreground = Brush("#E0E0E0"), CornerRadius = new CornerRadius(10), Padding = new Thickness(11, 8, 11, 8), IsEnabled = error.Length == 0 };
         copy.Click += async (_, _) =>
         {
             Touch();
@@ -177,7 +169,18 @@ public sealed partial class MainWindow : Window
         top.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         top.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         top.Children.Add(metadata); Grid.SetColumn(actions, 1); top.Children.Add(actions);
-        var body = new StackPanel { Spacing = 12, Margin = new Thickness(16, 14, 16, 14) };
+        title.FontWeight = Microsoft.UI.Text.FontWeights.Normal;
+        title.FontSize = 16;
+        title.TextTrimming = TextTrimming.CharacterEllipsis;
+        name.TextTrimming = TextTrimming.CharacterEllipsis;
+        foreach (var button in new[] { copy, pin, edit })
+        {
+            button.Style = (Style)Application.Current.Resources["SubtleButtonStyle"];
+            button.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
+            button.CornerRadius = new CornerRadius(10);
+            button.MinHeight = 36;
+        }
+        var body = new StackPanel { Spacing = 8, Margin = new Thickness(0, 14, 0, 14) };
         body.Children.Add(top);
         var codeRow = new Grid { ColumnSpacing = 16 };
         codeRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -185,7 +188,21 @@ public sealed partial class MainWindow : Window
         codeRow.Children.Add(codeStack);
         Grid.SetColumn(copy, 1); codeRow.Children.Add(copy);
         body.Children.Add(codeRow);
-        return new Border { Background = Brush("#101010"), BorderBrush = Brush("#242424"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(14), Child = body };
+        if (!isHotp && a.Period > 0 && error.Length == 0)
+        {
+            var countdown = new ProgressBar
+            {
+                Minimum = 0, Maximum = a.Period,
+                Value = a.Period - DateTimeOffset.UtcNow.ToUnixTimeSeconds() % a.Period,
+                Height = 4, MinHeight = 4, IsHitTestVisible = false,
+                Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["WinOTPAccentBrush"],
+                Background = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 100, 100, 100))
+            };
+            AutomationProperties.SetName(countdown, $"{a.Issuer} time remaining");
+            _countdowns[a.Id] = countdown;
+            body.Children.Add(countdown);
+        }
+        return new Border { BorderBrush = Brush("#242424"), BorderThickness = new Thickness(0, 0, 0, 1), Child = body };
     }
 
     private async Task EditAccount(Account? edit = null)
@@ -380,6 +397,8 @@ public sealed partial class MainWindow : Window
                     _codeSteps[account.Id] = step;
                 }
                 labels.Time.Text = isHotp ? "Updated on copy" : account.Period > 0 ? $"Refreshes in {account.Period - seconds % account.Period}s" : "Invalid TOTP period";
+                if (_countdowns.TryGetValue(account.Id, out var countdown) && account.Period > 0)
+                    countdown.Value = account.Period - seconds % account.Period;
             }
             catch (Exception) { labels.Code.Text = "••••••"; labels.Time.Text = "Invalid account parameters"; }
         }
@@ -395,7 +414,10 @@ public sealed partial class MainWindow : Window
         var pass = PasswordInput(_settings.HasPassword ? "New password (leave blank to keep)" : "Master password (optional)", 340);
         var clearPass = new CheckBox { Content = "Remove master password", Visibility = _settings.HasPassword ? Visibility.Visible : Visibility.Collapsed };
         var form = new StackPanel { Spacing = 12 }; form.Children.Add(hide); form.Children.Add(Label("Clear clipboard after copying")); form.Children.Add(clear); form.Children.Add(Label("Lock after inactivity")); form.Children.Add(idle); form.Children.Add(Label("The master password locks the app interface")); form.Children.Add(pass); form.Children.Add(clearPass);
-        var dlg = new ContentDialog { XamlRoot = Content.XamlRoot, Title = "Settings", Content = form, PrimaryButtonText = "Save", CloseButtonText = "Cancel", DefaultButton = ContentDialogButton.Primary };
+        var version = typeof(App).Assembly.GetName().Version;
+        form.Children.Add(new Border { Height = 1, Background = Brush("#242424"), Margin = new Thickness(0, 8, 0, 0) });
+        form.Children.Add(new TextBlock { Text = version is null ? "Version unavailable" : $"Version {version.Major}.{version.Minor}.{Math.Max(version.Build, 0)}", FontSize = 12, Foreground = Brush("#A0A0A0"), Margin = new Thickness(0, 4, 0, 0) });
+        var dlg = new ContentDialog { XamlRoot = Content.XamlRoot, Title = "Settings", Content = new ScrollViewer { Content = form, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }, PrimaryButtonText = "Save", CloseButtonText = "Cancel", DefaultButton = ContentDialogButton.Primary };
         if (await dlg.ShowAsync() != ContentDialogResult.Primary) return;
         if (clearPass.IsChecked != true && !string.IsNullOrWhiteSpace(pass.Password) && pass.Password.Length < 8)
         {
@@ -433,16 +455,45 @@ public sealed partial class MainWindow : Window
         if (_loadFailed || _locked) throw new InvalidOperationException("Vault is unavailable.");
         _vault.Save(_accounts);
     }
-    private static SolidColorBrush Brush(string hex)
+    private readonly TrayIcon _tray;
+    private void ApplyTitleBarTheme()
     {
-        if (hex.Length == 7 && hex[0] == '#')
-            return new(Microsoft.UI.ColorHelper.FromArgb(255, Convert.ToByte(hex[1..3], 16), Convert.ToByte(hex[3..5], 16), Convert.ToByte(hex[5..7], 16)));
-        if (hex.Length == 9 && hex[0] == '#')
-            return new(Microsoft.UI.ColorHelper.FromArgb(Convert.ToByte(hex[1..3], 16), Convert.ToByte(hex[3..5], 16), Convert.ToByte(hex[5..7], 16), Convert.ToByte(hex[7..9], 16)));
-        throw new FormatException($"Неверный формат цвета: {hex}");
+        if (!AppWindowTitleBar.IsCustomizationSupported()) return;
+        var bar = AppWindow.TitleBar;
+        var background = Microsoft.UI.Colors.Transparent;
+        bar.BackgroundColor = background;
+        bar.InactiveBackgroundColor = background;
+        bar.ButtonBackgroundColor = background;
+        bar.ButtonInactiveBackgroundColor = background;
+        bar.ForegroundColor = Microsoft.UI.Colors.White;
+        bar.InactiveForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 160, 160, 160);
+        bar.ButtonForegroundColor = Microsoft.UI.Colors.White;
+        bar.ButtonInactiveForegroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 160, 160, 160);
+        bar.ButtonHoverBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 40, 40, 40);
+        bar.ButtonHoverForegroundColor = Microsoft.UI.Colors.White;
+        bar.ButtonPressedBackgroundColor = Microsoft.UI.ColorHelper.FromArgb(255, 55, 55, 55);
+        bar.ButtonPressedForegroundColor = Microsoft.UI.Colors.White;
+        var handle = WindowNative.GetWindowHandle(this);
+        int darkMode = 1;
+        _ = DwmSetWindowAttribute(handle, 20, ref darkMode, sizeof(int));
+        // DWMWA_WINDOW_CORNER_PREFERENCE: let Windows 11 round the native frame.
+        int roundedCorners = 2;
+        _ = DwmSetWindowAttribute(handle, 33, ref roundedCorners, sizeof(int));
     }
-    private static TextBox Input(string placeholder, string value) => new() { PlaceholderText = placeholder, Text = value, Background = Brush("#101010"), BorderBrush = Brush("#3A3A3A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(12, 10, 12, 10) };
-    private static PasswordBox PasswordInput(string placeholder, double minWidth) => new() { PlaceholderText = placeholder, MinWidth = minWidth, RequestedTheme = ElementTheme.Dark, Background = Brush("#101010"), Foreground = Brush("#F0F0F0"), BorderBrush = Brush("#3A3A3A"), BorderThickness = new Thickness(1), CornerRadius = new CornerRadius(10), Padding = new Thickness(12, 10, 12, 10) };
-    private static TextBlock Label(string text) => new() { Text = text, FontSize = 11, Foreground = Brush("#777777") };
+    [System.Runtime.InteropServices.DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(nint window, int attribute, ref int value, int size);
+
+    // Dynamic cards are rebuilt when the system theme changes.
+    private static Microsoft.UI.Xaml.Media.Brush Brush(string hex) => (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources[hex switch
+    {
+        "#101010" => "CardBackgroundFillColorDefaultBrush",
+        "#171717" => "ControlFillColorDefaultBrush",
+        "#242424" or "#3A3A3A" => "ControlStrokeColorDefaultBrush",
+        "#777777" or "#929292" or "#A0A0A0" or "#B0B0B0" or "#BDBDBD" => "TextFillColorSecondaryBrush",
+        _ => "TextFillColorPrimaryBrush"
+    }];
+    private static TextBox Input(string placeholder, string value) => new() { Header = placeholder, Text = value };
+    private static PasswordBox PasswordInput(string placeholder, double minWidth) => new() { Header = placeholder, MinWidth = minWidth };
+    private static TextBlock Label(string text) => new() { Text = text, FontSize = 13, Foreground = Brush("#777777") };
     private async Task ShowError(string title, string message) { await new ContentDialog { XamlRoot = Content.XamlRoot, Title = title, Content = message, CloseButtonText = "OK" }.ShowAsync(); }
 }

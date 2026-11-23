@@ -19,3 +19,6 @@ vault.bin
 settings.bin
 startup.log
 *.winotp
+vault.enc
+vault.lock
+**/preview-data/

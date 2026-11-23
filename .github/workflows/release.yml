@@ -5,7 +5,10 @@ on:
 permissions:
   contents: read
 jobs:
+  linux:
+    uses: ./.github/workflows/linux.yml
   release:
+    needs: linux
     runs-on: windows-latest
     timeout-minutes: 30
     permissions:
@@ -40,11 +43,21 @@ jobs:
       - uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
         with:
           subject-path: artifacts/WinOTP-Setup.exe
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-packages
+          path: artifacts/linux-release
       - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           generate_release_notes: true
           prerelease: true
+          draft: true
           fail_on_unmatched_files: true
           files: |
             artifacts/WinOTP-Setup.exe
             artifacts/SHA256SUMS.txt
+            artifacts/linux-release/*.deb
+            artifacts/linux-release/*.rpm
+            artifacts/linux-release/*.AppImage
+            artifacts/linux-release/SHA256SUMS-linux.txt
+            artifacts/linux-release/linux-native.png

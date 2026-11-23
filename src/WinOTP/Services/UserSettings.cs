@@ -12,9 +12,9 @@ public sealed class UserSettings
     public string? PasswordSalt { get; set; }
     public string? PasswordHash { get; set; }
 
-    private string _path;
-    public UserSettings() : this(null) { }
-    public UserSettings(string? path) => _path = path ?? DataPaths.File("settings.bin");
+    private string? _path;
+    public UserSettings() { }
+    public UserSettings(string? path) => _path = path;
     public static UserSettings Load(string? path = null)
     {
         if (path is null) path = DataPaths.File("settings.bin");
@@ -26,16 +26,12 @@ public sealed class UserSettings
             var bytes = ProtectedData.Unprotect(protectedBytes, null, DataProtectionScope.CurrentUser);
             try
             {
-                var settings = JsonSerializer.Deserialize<UserSettings>(bytes) ?? new();
+                var settings = JsonSerializer.Deserialize<UserSettings>(bytes) ?? throw new InvalidOperationException("Settings payload is null. Existing data was not changed.");
                 settings._path = path;
                 if ((settings.PasswordSalt is null) != (settings.PasswordHash is null))
                     throw new InvalidOperationException("Password settings are incomplete. Restore a valid settings file; protection was not disabled.");
-                if (!settings.CodeVisibilityConfigured)
-                {
-                    settings.HideCodes = false;
-                    settings.CodeVisibilityConfigured = true;
-                    settings.Save();
-                }
+                // Loading is read-only: preserve the user's existing code visibility preference.
+                settings.CodeVisibilityConfigured = true;
                 return settings;
             }
             finally { CryptographicOperations.ZeroMemory(bytes); }
@@ -46,6 +42,7 @@ public sealed class UserSettings
     }
     public void Save()
     {
+        _path ??= DataPaths.File("settings.bin");
         CodeVisibilityConfigured = true;
         Directory.CreateDirectory(Path.GetDirectoryName(_path)!); var bytes = JsonSerializer.SerializeToUtf8Bytes(this);
         try

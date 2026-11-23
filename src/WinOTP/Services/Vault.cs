@@ -17,7 +17,7 @@ public sealed class Vault
             var plain = ProtectedData.Unprotect(protectedBytes, null, DataProtectionScope.CurrentUser);
             try
             {
-                var accounts = JsonSerializer.Deserialize<List<Account>>(plain) ?? [];
+                var accounts = JsonSerializer.Deserialize<List<Account>>(plain) ?? throw new InvalidOperationException("Vault payload is null. Existing data was not changed.");
                 var accountIds = new HashSet<Guid>();
                 foreach (var account in accounts)
                 {

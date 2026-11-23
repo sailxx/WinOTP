@@ -1,0 +1,57 @@
+name: Linux packages
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9
+        with:
+          dotnet-version: 10.0.x
+      - name: Install packaging and UI dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ruby-dev rpm squashfs-tools desktop-file-utils xvfb libx11-6 libice6 libsm6 libfontconfig1 libglib2.0-0 libicu74 libssl3
+          sudo gem install fpm -v 1.16.0 --no-document
+      - run: dotnet run --project tests/Portable/Portable.csproj -c Release
+      - name: Verify pinned AppImage tool
+        run: |
+          curl -fL --retry 3 https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage -o "$RUNNER_TEMP/appimagetool"
+          echo 'ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  '"$RUNNER_TEMP/appimagetool" | sha256sum -c -
+          chmod +x "$RUNNER_TEMP/appimagetool"
+      - name: Build deb, rpm and AppImage
+        env:
+          APPIMAGETOOL: ${{ runner.temp }}/appimagetool
+        run: bash packaging/linux/build.sh
+      - name: Validate desktop entry and package contents
+        run: |
+          desktop-file-validate packaging/linux/winotp.desktop
+          dpkg-deb --info artifacts/linux/packages/*.deb
+          rpm -qip artifacts/linux/packages/*.rpm
+          test -x artifacts/linux/WinOTP.AppDir/AppRun
+      - name: Install and launch Debian package
+        run: |
+          sudo apt-get install -y ./artifacts/linux/packages/*.deb
+          xvfb-run -a winotp --preview --screenshot "$PWD/artifacts/linux/packages/linux-native.png"
+          test -s artifacts/linux/packages/linux-native.png
+      - name: Launch AppImage without FUSE
+        run: |
+          xvfb-run -a artifacts/linux/packages/*.AppImage --appimage-extract-and-run --preview --screenshot "$PWD/artifacts/linux/packages/linux-appimage.png"
+          test -s artifacts/linux/packages/linux-appimage.png
+      - name: Store packages and Linux screenshots for approval
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: artifacts/linux/packages/*
+          if-no-files-found: error
+          retention-days: 14

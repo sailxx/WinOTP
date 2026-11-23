@@ -1,6 +1,57 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="880" height="532" viewBox="0 0 880 532" role="img" aria-label="WinOTP features">
-<defs><linearGradient id="bg" x2="0" y2="1"><stop stop-color="#0d0d0d"/><stop offset="1" stop-color="#000"/></linearGradient><linearGradient id="card" x2="1" y2="1"><stop stop-color="#1c1c1c"/><stop offset="1" stop-color="#0a0a0a"/></linearGradient><linearGradient id="blue"><stop stop-color="#a8e1ff"/><stop offset="1" stop-color="#3b8bff"/></linearGradient></defs>
-<rect x=".5" y=".5" width="879" height="531" rx="24" fill="url(#bg)" stroke="#242424"/><g font-family="Segoe UI,Arial,sans-serif"><rect x="40" y="34" width="111" height="30" rx="8" fill="#141414" stroke="#333"/><path d="M53 49l4 4 8-8" fill="none" stroke="#4cc2ff" stroke-width="2"/><text x="72" y="54" font-family="Consolas,monospace" font-size="12" font-weight="700" letter-spacing="1" fill="#fff">FEATURES</text><text x="40" y="104" font-size="32" font-weight="800" fill="#fff">Your codes — <tspan fill="url(#blue)">on your device</tspan></text>
-<g fill="url(#card)" stroke="#2a2a2a"><rect x="40" y="132" width="259" height="176" rx="18"/><rect x="310" y="132" width="259" height="176" rx="18"/><rect x="581" y="132" width="259" height="176" rx="18"/><rect x="40" y="320" width="259" height="176" rx="18"/><rect x="310" y="320" width="259" height="176" rx="18"/><rect x="581" y="320" width="259" height="176" rx="18"/></g>
-<g fill="#14242b" stroke="#284b5b"><rect x="60" y="152" width="40" height="40" rx="11"/><rect x="330" y="152" width="40" height="40" rx="11"/><rect x="601" y="152" width="40" height="40" rx="11"/><rect x="60" y="340" width="40" height="40" rx="11"/><rect x="330" y="340" width="40" height="40" rx="11"/><rect x="601" y="340" width="40" height="40" rx="11"/></g><g fill="#4cc2ff" font-family="Consolas,monospace" font-size="16" font-weight="700"><text x="69" y="178">01</text><text x="339" y="178">02</text><text x="610" y="178">03</text><text x="69" y="366">04</text><text x="339" y="366">05</text><text x="610" y="366">06</text></g>
-<g fill="#fff" font-size="17" font-weight="700"><text x="112" y="178">One-time codes</text><text x="382" y="178">On your device</text><text x="653" y="178">Import accounts</text><text x="112" y="366">Find them fast</text><text x="382" y="366">Backups</text><text x="653" y="366">No cloud sync</text></g><g fill="#a3a3a3" font-size="14"><text x="60" y="224">TOTP and HOTP support.</text><text x="60" y="246">SHA-1, SHA-256 and SHA-512.</text><text x="330" y="224">Windows DPAPI protects</text><text x="330" y="246">the local vault.</text><text x="601" y="224">URI, QR and Aegis JSON.</text><text x="601" y="246">Preview before importing.</text><text x="60" y="412">Search, favorites and</text><text x="60" y="434">quick copying.</text><text x="330" y="412">Portable, password-protected</text><text x="330" y="434">backup files.</text><text x="601" y="412">No registration and</text><text x="601" y="434">no cloud synchronization.</text></g></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="596" viewBox="0 0 880 596" role="img" aria-label="Your codes — on your device">
+<style>text{font-family:"Segoe UI",Arial,sans-serif}.m{font-family:Consolas,monospace}.r{animation:rise .8s ease-out backwards}@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.r{animation:none}}</style>
+<defs><linearGradient id="bg" x2="0" y2="1"><stop stop-color="#0d0d0d"/><stop offset="1" stop-color="#000"/></linearGradient><linearGradient id="cg" x2="1" y2="1"><stop stop-color="#1c1c1c"/><stop offset="1" stop-color="#0a0a0a"/></linearGradient><linearGradient id="tg"><stop stop-color="#7CC4FF"/><stop offset="1" stop-color="#1478F0"/></linearGradient><linearGradient id="hl"><stop stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+<rect x=".5" y=".5" width="879" height="595" rx="24" fill="url(#bg)" stroke="#242424"/>
+<rect x="40" y="34" width="118" height="30" rx="8" fill="#141414" stroke="#333"/>
+<path d="M53 49.5l4 4 8-8.5" fill="none" stroke="#2E9BFF" stroke-width="2.2"/>
+<text x="72" y="54" font-size="12" font-weight="600" fill="#fff" class="m">FEATURES</text>
+<text x="40" y="104" font-family="Segoe UI,Arial" font-size="32" font-weight="800" fill="#fff">Your codes —<tspan fill="url(#tg)"> on your device</tspan></text>
+<g class="r" style="animation-delay:0.09s"><rect x="40" y="132" width="392" height="132" rx="20" fill="url(#cg)" stroke="#2A2A2A"/>
+<rect x="60" y="132.5" width="352" height="1" fill="url(#hl)"/>
+<circle cx="80" cy="174" r="16" fill="#2E9BFF"/>
+<text x="75" y="179" font-size="15" font-weight="700" fill="#021226" class="m">1</text>
+<text x="108" y="180" font-size="20" font-weight="700" fill="#fff" class="">One-time codes</text>
+<text x="64" y="224" font-size="15" font-weight="500" fill="#A3A3A3" class="">TOTP and HOTP. 6 or 8 digits.</text>
+<text x="64" y="246" font-size="15" font-weight="500" fill="#A3A3A3" class="">SHA-1, SHA-256 and SHA-512.</text>
+</g>
+<g class="r" style="animation-delay:0.18s"><rect x="448" y="132" width="392" height="132" rx="20" fill="url(#cg)" stroke="#2A2A2A"/>
+<rect x="468" y="132.5" width="352" height="1" fill="url(#hl)"/>
+<circle cx="488" cy="174" r="16" fill="#2E9BFF"/>
+<text x="483" y="179" font-size="15" font-weight="700" fill="#021226" class="m">2</text>
+<text x="516" y="180" font-size="20" font-weight="700" fill="#fff" class="">Local vault</text>
+<text x="472" y="224" font-size="15" font-weight="500" fill="#A3A3A3" class="">Protected by Windows DPAPI.</text>
+<text x="472" y="246" font-size="15" font-weight="500" fill="#A3A3A3" class="">Bound to your Windows user.</text>
+</g>
+<g class="r" style="animation-delay:0.27s"><rect x="40" y="280" width="392" height="132" rx="20" fill="url(#cg)" stroke="#2A2A2A"/>
+<rect x="60" y="280.5" width="352" height="1" fill="url(#hl)"/>
+<circle cx="80" cy="322" r="16" fill="#2E9BFF"/>
+<text x="75" y="327" font-size="15" font-weight="700" fill="#021226" class="m">3</text>
+<text x="108" y="328" font-size="20" font-weight="700" fill="#fff" class="">Bring your accounts</text>
+<text x="64" y="372" font-size="15" font-weight="500" fill="#A3A3A3" class="">URI, QR images and Aegis JSON.</text>
+<text x="64" y="394" font-size="15" font-weight="500" fill="#A3A3A3" class="">Preview entries before importing.</text>
+</g>
+<g class="r" style="animation-delay:0.36s"><rect x="448" y="280" width="392" height="132" rx="20" fill="url(#cg)" stroke="#2A2A2A"/>
+<rect x="468" y="280.5" width="352" height="1" fill="url(#hl)"/>
+<circle cx="488" cy="322" r="16" fill="#2E9BFF"/>
+<text x="483" y="327" font-size="15" font-weight="700" fill="#021226" class="m">4</text>
+<text x="516" y="328" font-size="20" font-weight="700" fill="#fff" class="">Find them fast</text>
+<text x="472" y="372" font-size="15" font-weight="500" fill="#A3A3A3" class="">Search, favorites and quick copying.</text>
+<text x="472" y="394" font-size="15" font-weight="500" fill="#A3A3A3" class="">Hide codes when you need privacy.</text>
+</g>
+<g class="r" style="animation-delay:0.45s"><rect x="40" y="428" width="392" height="132" rx="20" fill="url(#cg)" stroke="#2A2A2A"/>
+<rect x="60" y="428.5" width="352" height="1" fill="url(#hl)"/>
+<circle cx="80" cy="470" r="16" fill="#2E9BFF"/>
+<text x="75" y="475" font-size="15" font-weight="700" fill="#021226" class="m">5</text>
+<text x="108" y="476" font-size="20" font-weight="700" fill="#fff" class="">Encrypted backups</text>
+<text x="64" y="520" font-size="15" font-weight="500" fill="#A3A3A3" class="">Portable .winotp backup files.</text>
+<text x="64" y="542" font-size="15" font-weight="500" fill="#A3A3A3" class="">Protected with a separate password.</text>
+</g>
+<g class="r" style="animation-delay:0.54s"><rect x="448" y="428" width="392" height="132" rx="20" fill="url(#cg)" stroke="#2A2A2A"/>
+<rect x="468" y="428.5" width="352" height="1" fill="url(#hl)"/>
+<circle cx="488" cy="470" r="16" fill="#2E9BFF"/>
+<text x="483" y="475" font-size="15" font-weight="700" fill="#021226" class="m">6</text>
+<text x="516" y="476" font-size="20" font-weight="700" fill="#fff" class="">Without the cloud</text>
+<text x="472" y="520" font-size="15" font-weight="500" fill="#A3A3A3" class="">No registration or cloud sync.</text>
+<text x="472" y="542" font-size="15" font-weight="500" fill="#A3A3A3" class="">Your accounts stay on your device.</text>
+</g>
+</svg>

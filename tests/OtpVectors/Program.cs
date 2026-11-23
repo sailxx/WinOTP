@@ -104,6 +104,7 @@ try
     Expect<InvalidOperationException>("Settings reject corrupted DPAPI data", () => UserSettings.Load(settingsPath));
 }
 finally { Directory.Delete(storageTestDirectory, recursive: true); }
+StorageRegression.Run();
 Console.WriteLine($"Passed {hotp.Length} HOTP, {vectors.Length} TOTP RFC vectors, OTP URI validation, malformed-input guards, Google migration protobuf, and encrypted/plaintext Aegis JSON vectors.");
 
 static void Check(string name, string expected, string actual)

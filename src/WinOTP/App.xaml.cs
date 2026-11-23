@@ -20,6 +20,7 @@ public partial class App : Application
         };
         try
         {
+            _ = DataPaths.File("vault.bin"); // Finish migration before startup logging creates the destination.
             InitializeComponent();
             DebugSettings.XamlResourceReferenceFailed += (_, e) => Log($"XAML resource reference failed: {e.Message}");
             Log("App XAML initialized");
@@ -37,6 +38,7 @@ public partial class App : Application
         try
         {
             Log("OnLaunched entered");
+            Marshal.ThrowExceptionForHR(SetCurrentProcessExplicitAppUserModelID("sailxx.WinOTP"));
             _window = new MainWindow();
             Log("MainWindow constructed");
             _window.Activate();
@@ -61,14 +63,20 @@ public partial class App : Application
     }
 
     // Exception messages may contain imported secrets or personal paths.
-    private static void Report(Exception exception) =>
+    private static void Report(Exception exception)
+    {
         Log($"STARTUP ERROR: {exception.GetType().Name} 0x{exception.HResult:X8}");
+        if (DataPaths.IsPreview) Log(exception.ToString());
+    }
 
     private static void ShowError(Exception exception)
     {
         try { MessageBoxW(IntPtr.Zero, $"WinOTP could not continue safely. Your vault files have not been reset. Error: {exception.GetType().Name} (0x{exception.HResult:X8}).", "WinOTP: error", 0x10); }
         catch { }
     }
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    private static extern int SetCurrentProcessExplicitAppUserModelID(string appId);
 
     [DllImport("user32.dll", EntryPoint = "MessageBoxW", CharSet = CharSet.Unicode, ExactSpelling = true)]
     private static extern int MessageBoxW(IntPtr window, string text, string caption, uint type);

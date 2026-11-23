@@ -1,5 +1,5 @@
 #define AppName "WinOTP"
-#define AppVersion "0.3.2"
+#define AppVersion "0.4.0"
 #define AppPublisher "sailxx"
 #define AppUrl "https://github.com/sailxx/WinOTP"
 #define AppExe "WinOTP.exe"
@@ -18,7 +18,7 @@ UninstallDisplayIcon={app}\{#AppExe}
 SetupIconFile=..\src\WinOTP\Assets\WinOTP.ico
 OutputDir=..\artifacts
 OutputBaseFilename=WinOTP-Setup
-VersionInfoVersion=0.3.2.0
+VersionInfoVersion=0.4.0.0
 VersionInfoCompany={#AppPublisher}
 VersionInfoDescription=WinOTP Windows authenticator installer
 VersionInfoProductName=WinOTP

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=WinOTP
+Comment=Local TOTP and HOTP authenticator
+Exec=winotp
+Icon=winotp
+Terminal=false
+Categories=Utility;Security;
+StartupWMClass=WinOTP.Linux

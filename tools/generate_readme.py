@@ -1,0 +1,26 @@
+"""Generate WinOTP panels using the Tobi/TrayMixer 880px card geometry."""
+from pathlib import Path
+from html import escape
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / 'assets/readme'
+STYLE = '''<style>text{font-family:"Segoe UI",Arial,sans-serif}.m{font-family:Consolas,monospace}.r{animation:rise .8s ease-out backwards}@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.r{animation:none}}</style>'''
+DEFS = '''<defs><linearGradient id="bg" x2="0" y2="1"><stop stop-color="#0d0d0d"/><stop offset="1" stop-color="#000"/></linearGradient><linearGradient id="cg" x2="1" y2="1"><stop stop-color="#1c1c1c"/><stop offset="1" stop-color="#0a0a0a"/></linearGradient><linearGradient id="tg"><stop stop-color="#7CC4FF"/><stop offset="1" stop-color="#1478F0"/></linearGradient><linearGradient id="hl"><stop stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#fff" stop-opacity=".28"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>'''
+def text(x,y,s,size=15,color='#A3A3A3',weight=500,cls=''):
+    return f'<text x="{x}" y="{y}" font-size="{size}" font-weight="{weight}" fill="{color}" class="{cls}">{escape(s)}</text>'
+def panel(name, tag, title, accent, cards):
+    h=152+148*((len(cards)+1)//2)
+    p=[f'<svg xmlns="http://www.w3.org/2000/svg" width="880" height="{h}" viewBox="0 0 880 {h}" role="img" aria-label="{escape(title+accent)}">',STYLE,DEFS,f'<rect x=".5" y=".5" width="879" height="{h-1}" rx="24" fill="url(#bg)" stroke="#242424"/>',f'<rect x="40" y="34" width="{max(111,len(tag)*9+46)}" height="30" rx="8" fill="#141414" stroke="#333"/>','<path d="M53 49.5l4 4 8-8.5" fill="none" stroke="#2E9BFF" stroke-width="2.2"/>',text(72,54,tag,12,'#fff',600,'m'),f'<text x="40" y="104" font-family="Segoe UI,Arial" font-size="32" font-weight="800" fill="#fff">{escape(title)}<tspan fill="url(#tg)">{escape(accent)}</tspan></text>']
+    for i,(heading,a,b) in enumerate(cards):
+        x=40+(i%2)*408; y=132+(i//2)*148
+        p += [f'<g class="r" style="animation-delay:{.09*(i+1):.2f}s"><rect x="{x}" y="{y}" width="392" height="132" rx="20" fill="url(#cg)" stroke="#2A2A2A"/>',f'<rect x="{x+20}" y="{y+.5}" width="352" height="1" fill="url(#hl)"/>',f'<circle cx="{x+40}" cy="{y+42}" r="16" fill="#2E9BFF"/>',text(x+35,y+47,str(i+1),15,'#021226',700,'m'),text(x+68,y+48,heading,20,'#fff',700),text(x+24,y+92,a),text(x+24,y+114,b),'</g>']
+    (OUT/name).write_text('\n'.join(p+['</svg>']),encoding='utf-8')
+panel('features.svg','FEATURES','Your codes —',' on your device',[
+('One-time codes','TOTP and HOTP. 6 or 8 digits.','SHA-1, SHA-256 and SHA-512.'),('Local vault','Protected by Windows DPAPI.','Bound to your Windows user.'),('Bring your accounts','URI, QR images and Aegis JSON.','Preview entries before importing.'),('Find them fast','Search, favorites and quick copying.','Hide codes when you need privacy.'),('Encrypted backups','Portable .winotp backup files.','Protected with a separate password.'),('Without the cloud','No registration or cloud sync.','Your accounts stay on your device.')])
+panel('controls.svg','CONTROLS','Everyday actions,',' within reach',[
+('Add','Create an account from a secret key.','Choose TOTP or counter-based HOTP.'),('Hide codes','Conceal codes from the account list.','Show them again with one click.'),('Search','Filter by service or account.','Clear the search to see every entry.'),('Import','Open the small settings menu.','Review accounts before saving them.'),('Backup','Create an encrypted portable copy.','Keep the backup password separately.'),('Settings','Interface lock and clipboard timeout.','The version is at the very bottom.')])
+panel('security.svg','DATA PROTECTION','Local by design.',' Know the limits.',[
+('Windows DPAPI','The vault belongs to your Windows user.','Not a defense against same-user malware.'),('Portable backups','AES-256-GCM encryption.','PBKDF2-SHA256: 600,000 iterations.'),('Interface lock','Optional master password and idle lock.','Locks the interface, not the Windows user.'),('Clipboard timeout','Clears the current copied code later.','Cannot erase history or third-party copies.')])
+panel('roadmap.svg','PROJECT STATUS','What is here.',' What still needs testing.',[
+('Desktop redesign','Compact dark WinUI 3 and Mica Alt.','Wallpaper-derived color on Windows 11.'),('Account workflow','Add, search, import and backup.','OTP and migration regression tests.'),('Desktop acceptance','Wallpaper changes and multiple scales','still need full acceptance testing.'),('Distribution','Inno Setup is the distribution format.','MSIX is not signed or installation-tested.')])
+(OUT/'whats-new.svg').write_text('''<svg xmlns="http://www.w3.org/2000/svg" width="160" height="52" viewBox="0 0 160 52" role="img" aria-label="What is new"><defs><linearGradient id="b" x2="0" y2="1"><stop stop-color="#202020"/><stop offset="1" stop-color="#101010"/></linearGradient></defs><rect x=".5" y=".5" width="159" height="51" rx="14" fill="url(#b)" stroke="#333"/><path d="M30 18l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="none" stroke="white" stroke-width="2"/><text x="50" y="32" font-family="Segoe UI,Arial" font-size="15" font-weight="700" fill="white">What’s new</text></svg>''',encoding='utf-8')
+print('Generated 5 README panels.')
