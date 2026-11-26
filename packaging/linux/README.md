@@ -23,7 +23,7 @@ dotnet run --project src/WinOTP.Linux/WinOTP.Linux.csproj -c Release -- --previe
 
 `.github/workflows/linux.yml` installs the packaging dependencies, verifies a pinned appimagetool digest, builds deb/rpm/AppImage, installs and starts the deb under Xvfb, starts the AppImage without FUSE, and uploads packages plus screenshots as `linux-packages`. It runs on PRs and can be run manually; it does not publish a release. `packaging/linux/build.sh` also runs locally on an x86_64 Linux host with .NET 10, fpm 1.16.0, rpm and squashfs-tools; supply `APPIMAGETOOL` pointing to the verified 1.9.1 x86_64 executable. All generated content stays under `artifacts/linux`.
 
-The tag workflow waits for Linux and Windows builds, then prepares a **draft** release with the installer, all three Linux packages and checksums. Review the real Linux screenshots and obtain Vlad's approval before publishing. Creating tags or pushing changes is not part of local preparation.
+The tag workflow waits for Linux and Windows builds, then prepares a **draft** release with the installer and all three Linux packages. GitHub shows SHA-256 digests for release assets. Review the real Linux screenshots and obtain Vlad's approval before publishing. Creating tags or pushing changes is not part of local preparation.
 
 ## Acceptance still required
 

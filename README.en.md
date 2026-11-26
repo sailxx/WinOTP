@@ -99,7 +99,7 @@ The installer is not Windows code-signed; SmartScreen may warn. Check the source
 <details>
 <summary><b>Verify your download</b></summary>
 
-If the selected release provides `SHA256SUMS.txt` and a provenance attestation, download them with the installer and run:
+Download the installer and run:
 
 ```powershell
 cd $HOME\Downloads
@@ -107,7 +107,7 @@ gh attestation verify WinOTP-Setup.exe --repo sailxx/WinOTP
 Get-FileHash .\WinOTP-Setup.exe -Algorithm SHA256
 ```
 
-Compare the hash with the checksum from the same release. Provenance is not Windows code signing or a guarantee of vulnerability-free code. Older releases may not include attestations.
+Compare the hash with the SHA-256 value next to the installer in the GitHub release asset list. Provenance is not Windows code signing or a guarantee of vulnerability-free code. Older releases may not include attestations.
 
 </details>
 
