@@ -125,18 +125,19 @@ public sealed partial class MainWindow : Window
         try { code = Otp.Generate(a); } catch (Exception) { error = "Invalid account parameters"; }
         var isHotp = string.Equals(a.Type, "HOTP", StringComparison.OrdinalIgnoreCase);
         var remaining = isHotp ? "Updated on copy" : a.Period > 0 ? $"Refreshes in {a.Period - DateTimeOffset.UtcNow.ToUnixTimeSeconds() % a.Period}s" : "Invalid TOTP period";
-        var title = new TextBlock { Text = a.Issuer, FontSize = 15, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, Foreground = Brush("#EEEEEE") };
-        var name = new TextBlock { Text = a.Name, FontSize = 12, Foreground = Brush("#C4D4DE") };
+        var hasIssuer = !string.IsNullOrWhiteSpace(a.Issuer);
+        var title = new TextBlock { Text = hasIssuer ? a.Issuer : a.Name, FontSize = 16, Foreground = Brush("#EEEEEE"), TextTrimming = TextTrimming.CharacterEllipsis };
+        var name = new TextBlock { Text = a.Name, FontSize = 12, Foreground = Brush("#C4D4DE"), TextTrimming = TextTrimming.CharacterEllipsis };
         var codeBlock = new TextBlock { Text = _settings.HideCodes ? new string('•', a.Digits) : code, FontFamily = new FontFamily("Segoe UI Variable"), FontSize = 28, CharacterSpacing = 100, Foreground = error.Length > 0 ? Brush("#B0B0B0") : Brush("#83E7FF"), VerticalAlignment = VerticalAlignment.Center };
-        var metadata = new StackPanel { Spacing = 5, VerticalAlignment = VerticalAlignment.Center };
-        metadata.Children.Add(title); metadata.Children.Add(name);
-        var codeStack = new StackPanel { Spacing = 4, VerticalAlignment = VerticalAlignment.Center };
+        var metadata = new StackPanel { Spacing = 2, MinHeight = 38, VerticalAlignment = VerticalAlignment.Top };
+        metadata.Children.Add(title);
+        if (hasIssuer && !string.IsNullOrWhiteSpace(a.Name) && !string.Equals(a.Name, a.Issuer, StringComparison.Ordinal))
+            metadata.Children.Add(name);
         var timeBlock = new TextBlock { Text = error.Length > 0 ? error : remaining, FontSize = 10, Foreground = Brush("#B6CAD6") };
-        codeStack.Children.Add(codeBlock); codeStack.Children.Add(timeBlock);
         _cardLabels[a.Id] = (codeBlock, timeBlock);
         _codeSteps[a.Id] = isHotp ? a.Counter : a.Period > 0 ? DateTimeOffset.UtcNow.ToUnixTimeSeconds() / a.Period : long.MinValue;
         var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5, VerticalAlignment = VerticalAlignment.Center };
-        var copy = new Button { Content = "Copy code", Background = Brush("#171717"), Foreground = Brush("#E0E0E0"), CornerRadius = new CornerRadius(10), Padding = new Thickness(11, 8, 11, 8), IsEnabled = error.Length == 0 };
+        var copy = new Button { Content = "Copy code", MinWidth = 88, Padding = new Thickness(8, 4, 8, 4), IsEnabled = error.Length == 0 };
         copy.Click += async (_, _) =>
         {
             Touch();
@@ -158,10 +159,10 @@ public sealed partial class MainWindow : Window
             }
             catch (Exception) { await ShowError("Code not copied", "Check the account and vault access, then try again. A HOTP counter may have advanced if the clipboard was busy."); }
         };
-        var pin = new Button { Content = new FontIcon { Glyph = a.Favorite ? "\uE735" : "\uE734", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 14 }, Background = Brush("#171717"), Foreground = Brush("#FFFFFF"), CornerRadius = new CornerRadius(10), Padding = new Thickness(10, 8, 10, 8) };
+        var pin = new Button { Content = new FontIcon { Glyph = a.Favorite ? "\uE735" : "\uE734", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 14 }, Foreground = Brush("#FFFFFF"), Width = 32, Padding = new Thickness(0) };
         AutomationProperties.SetName(pin, a.Favorite ? "Remove from favorites" : "Add to favorites");
         pin.Click += (_, _) => { a.Favorite = !a.Favorite; Save(); RenderAccounts(); };
-        var edit = new Button { Content = new FontIcon { Glyph = "\uE712", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 14 }, Background = Brush("#171717"), Foreground = Brush("#BDBDBD"), CornerRadius = new CornerRadius(10), Padding = new Thickness(10, 8, 10, 8) };
+        var edit = new Button { Content = new FontIcon { Glyph = "\uE712", FontFamily = new FontFamily("Segoe MDL2 Assets"), FontSize = 14 }, Foreground = Brush("#BDBDBD"), Width = 32, Padding = new Thickness(0) };
         AutomationProperties.SetName(edit, "Account actions");
         edit.Click += (_, _) => { var menu = new MenuFlyout(); var editItem = new MenuFlyoutItem { Text = "Edit" }; editItem.Click += async (_, _) => await EditAccount(a); var deleteItem = new MenuFlyoutItem { Text = "Delete" }; deleteItem.Click += async (_, _) => { var dlg = new ContentDialog { XamlRoot = Content.XamlRoot, Title = "Delete account?", Content = $"{a.Issuer} · {a.Name}", PrimaryButtonText = "Delete", CloseButtonText = "Cancel", DefaultButton = ContentDialogButton.Close }; if (await dlg.ShowAsync() == ContentDialogResult.Primary) { _accounts.Remove(a); Save(); RenderAccounts(); } }; menu.Items.Add(editItem); menu.Items.Add(deleteItem); menu.ShowAt(edit); };
         actions.Children.Add(pin); actions.Children.Add(edit);
@@ -169,25 +170,23 @@ public sealed partial class MainWindow : Window
         top.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         top.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
         top.Children.Add(metadata); Grid.SetColumn(actions, 1); top.Children.Add(actions);
-        title.FontWeight = Microsoft.UI.Text.FontWeights.Normal;
-        title.FontSize = 16;
-        title.TextTrimming = TextTrimming.CharacterEllipsis;
-        name.TextTrimming = TextTrimming.CharacterEllipsis;
         foreach (var button in new[] { copy, pin, edit })
         {
             button.Style = (Style)Application.Current.Resources["SubtleButtonStyle"];
             button.Background = new SolidColorBrush(Microsoft.UI.Colors.Transparent);
             button.CornerRadius = new CornerRadius(10);
-            button.MinHeight = 36;
+            button.MinHeight = 32;
+            button.VerticalAlignment = VerticalAlignment.Center;
         }
-        var body = new StackPanel { Spacing = 8, Margin = new Thickness(0, 14, 0, 14) };
+        var body = new StackPanel { Spacing = 4, Margin = new Thickness(0, 10, 0, 10) };
         body.Children.Add(top);
         var codeRow = new Grid { ColumnSpacing = 16 };
         codeRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
         codeRow.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-        codeRow.Children.Add(codeStack);
+        codeRow.Children.Add(codeBlock);
         Grid.SetColumn(copy, 1); codeRow.Children.Add(copy);
         body.Children.Add(codeRow);
+        body.Children.Add(timeBlock);
         if (!isHotp && a.Period > 0 && error.Length == 0)
         {
             var countdown = new ProgressBar
