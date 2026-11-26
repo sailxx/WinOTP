@@ -1,105 +1,106 @@
+**English** · [العربية](README.ar.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · [Čeština](README.cs.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Ελληνικά](README.el.md) · [Bahasa Indonesia](README.id.md) · [Gaeilge](README.ga.md) · [Italiano](README.it.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Polski](README.pl.md) · [Română](README.ro.md) · [Русский](README.ru.md) · [Español](README.es.md) · [Українська](README.uk.md) · [اردو](README.ur.md) · [ئۇيغۇرچە](README.ug.md) · [Tiếng Việt](README.vi.md)
+
 <div align="center">
 
-<img src="assets/winotp-icon.svg" width="96" alt="Логотип WinOTP">
+<img src="assets/winotp-icon.svg" width="96" alt="WinOTP logo">
 
 # WinOTP
 
-**Ваши коды. Ваше устройство. Аутентификатор для Windows 11.**
+**Your codes. Your device. Your authenticator for Windows 11.**
 
-TOTP и HOTP в компактном тёмном окне с оттенком обоев. Поиск, импорт и зашифрованные резервные копии — без регистрации и облачной синхронизации.
+TOTP and HOTP in a compact dark window with wallpaper-derived color. Search, import and encrypted backups without registration or cloud sync.
 
-Разрабатывает Влад · [sailxx](https://github.com/sailxx).
+Built by Vlad · [sailxx](https://github.com/sailxx).
 
-**Русский** · [English](README.en.md)
 
 ![Windows 11](https://img.shields.io/badge/Windows-11-2E9BFF)
 ![WinUI 3](https://img.shields.io/badge/WinUI-3-2E9BFF)
 [![MIT](https://img.shields.io/badge/license-MIT-2E9BFF)](LICENSE)
 
 <br>
-<img src="assets/readme/hero.svg" width="100%" alt="WinOTP — локальный аутентификатор для Windows 11; иллюстрация интерфейса">
+<img src="assets/readme/hero.svg" width="100%" alt="WinOTP — your codes, your device; an interface illustration">
 
-<a href="https://github.com/sailxx/WinOTP/releases"><img src="assets/readme/download.svg" height="52" alt="Скачать для Windows 11"></a>&nbsp;&nbsp;<a href="https://github.com/sailxx/WinOTP/releases"><img src="assets/readme/whats-new.svg" height="52" alt="Что нового"></a>
+<a href="https://github.com/sailxx/WinOTP/releases"><img src="assets/readme/download.svg" height="52" alt="Download for Windows 11"></a>&nbsp;&nbsp;<a href="https://github.com/sailxx/WinOTP/releases"><img src="assets/readme/whats-new.svg" height="52" alt="What’s new"></a>
 
-Windows 11 · x64 · Интерфейс на английском
+Windows 11 · x64 · English interface
 
 </div>
 
 <br>
-<img src="assets/readme/features.svg" width="100%" alt="Возможности: TOTP и HOTP, локальное хранилище, импорт, поиск, резервные копии, без облачной синхронизации">
+<img src="assets/readme/features.svg" width="100%" alt="Features: TOTP and HOTP, local vault, import, search, backups and no cloud sync">
 
 <details>
-<summary><b>Подробнее о возможностях</b></summary>
+<summary><b>More about the features</b></summary>
 
-### Одноразовые коды
+### One-time codes
 
-TOTP (RFC 6238) и HOTP (RFC 4226), SHA-1/256/512, 6 или 8 цифр. Добавляйте, редактируйте, удаляйте и копируйте аккаунты и коды. Избранное и поиск помогают найти нужную запись.
+RFC 6238 TOTP and RFC 4226 HOTP; SHA-1/256/512; 6 or 8 digits. Add, edit, remove and copy accounts and codes. Search and favorites keep the right entry within reach.
 
-### Импорт аккаунтов
+### Bring your accounts
 
-Поддерживаются otpauth URI, Google Authenticator migration URI, QR-изображения и Aegis JSON. Перед сохранением можно просмотреть записи; уже добавленные аккаунты исключаются.
+Import otpauth URIs, Google Authenticator migration URIs, QR images and Aegis JSON. Preview entries before saving and skip existing accounts.
 
-### Резервные копии
+### Encrypted backups
 
-Переносимые файлы `.winotp` шифруются отдельным паролем. Храните пароль отдельно от файла и проверяйте возможность восстановления до удаления исходных данных.
+Portable `.winotp` files use a separate password. Keep that password separately and verify restoration before deleting the source data.
 
 </details>
 
 <br>
-<img src="assets/readme/controls.svg" width="100%" alt="Управление: Add, Hide codes, Search, Import, Backup, Settings">
+<img src="assets/readme/controls.svg" width="100%" alt="Controls: Add, Hide codes, Search, Import, Backup and Settings">
 
 <details>
-<summary><b>Управление и снимки приложения</b></summary>
+<summary><b>Controls and application screenshot</b></summary>
 
-| Элемент | Действие |
+| Control | Action |
 | --- | --- |
-| **Add** | Добавить аккаунт |
-| **Hide codes / Show codes** | Скрыть или показать коды |
-| **Search accounts** | Найти сервис или аккаунт |
-| **Шестерёнка → Import** | Открыть импорт с предпросмотром |
-| **Шестерёнка → Backup** | Создать зашифрованную резервную копию |
-| **Шестерёнка → Settings** | Настроить блокировку и очистку буфера; версия находится в конце |
+| **Add** | Create an account |
+| **Hide codes / Show codes** | Conceal or reveal codes |
+| **Search accounts** | Find a service or account |
+| **Gear → Import** | Import accounts with a preview |
+| **Gear → Backup** | Create an encrypted backup |
+| **Gear → Settings** | Configure interface lock and clipboard timeout; version is at the bottom |
 
-Список прокручивается колёсиком и жестами; полоса прокрутки скрыта. Постоянно тёмное оформление использует нативный Mica Alt с оттенком обоев, если это разрешено настройками Windows.
+Scroll the account list with the mouse wheel or gestures; the scrollbar is hidden. The permanently dark interface uses native Mica Alt with wallpaper-derived color when permitted by Windows settings.
 
-Снимок отдельного тестового хранилища с публичными демонстрационными данными:
+Screenshot of an isolated test vault with public example data:
 
-<img src="assets/screenshots/winotp-compact-mica.png" width="540" alt="Главное окно WinOTP с тестовым аккаунтом">
-
-</details>
-
-<br>
-<img src="assets/readme/security.svg" width="100%" alt="Защита данных: Windows DPAPI, AES-256-GCM, блокировка интерфейса и ограничения буфера обмена">
-
-<details>
-<summary><b>Защита данных и её ограничения</b></summary>
-
-Хранилище защищено Windows DPAPI текущего пользователя. Резервные копии используют AES-256-GCM и PBKDF2-SHA256 с 600 000 итерациями. Мастер-пароль блокирует **интерфейс**, но не защищает от вредоносной программы, запущенной под той же учётной записью Windows. Очистка буфера не удаляет копии из истории и сторонних приложений.
-
-Данные находятся в `%LOCALAPPDATA%\WinOTP`. При переносе из `%LOCALAPPDATA%\NoirAuth` исходные файлы сохраняются. Не удаляйте их, пока не проверите новое хранилище и резервную копию. Подробности: [SECURITY.md](SECURITY.md).
+<img src="assets/screenshots/winotp-compact-mica.png" width="540" alt="WinOTP main window with a test account">
 
 </details>
 
 <br>
-<img src="assets/readme/roadmap.svg" width="100%" alt="Состояние проекта: компактный WinUI 3, основные сценарии, оставшиеся проверки обоев, масштабов и упаковки">
+<img src="assets/readme/security.svg" width="100%" alt="Data protection: Windows DPAPI, AES-256-GCM, interface lock and clipboard limits">
 
 <details>
-<summary><b>Установка и обновление</b></summary>
+<summary><b>Data protection and its limits</b></summary>
 
-1. Откройте [релизы](https://github.com/sailxx/WinOTP/releases) и проверьте описание выбранной версии.
-2. Для выпусков с новым названием скачайте `WinOTP-Setup.exe`.
-3. Запустите установщик и выберите папку. Права администратора не требуются.
+Windows DPAPI protects the vault for the current Windows user. Portable backups use AES-256-GCM and PBKDF2-SHA256 with 600,000 iterations. The master password locks the **interface**, not access by malware running as your Windows user. Clipboard clearing cannot erase clipboard history or copies captured by other apps.
 
-Данные хранятся отдельно от программы и сохраняются при удалении. Перед обновлением сделайте резервную копию. Интерфейс приложения и установщик используют английский язык.
+Data lives in `%LOCALAPPDATA%\WinOTP`. Migration copies legacy files from `%LOCALAPPDATA%\NoirAuth` without removing the originals. Keep them until you have verified the migrated vault and a restorable backup. See [SECURITY.md](SECURITY.md).
 
-Установщик не подписан цифровой подписью Windows; SmartScreen может показать предупреждение. Проверяйте источник и контрольную сумму, прежде чем решать, запускать ли файл.
+</details>
+
+<br>
+<img src="assets/readme/roadmap.svg" width="100%" alt="Project status: compact WinUI 3, account workflows and remaining wallpaper, scaling and packaging checks">
+
+<details>
+<summary><b>Install and update</b></summary>
+
+1. Open [Releases](https://github.com/sailxx/WinOTP/releases) and read the selected version’s notes.
+2. For releases carrying the new name, download `WinOTP-Setup.exe`.
+3. Run Setup and choose a folder. No administrator rights are required.
+
+Data is stored separately and retained when uninstalling. Create a backup before updating. The application interface and installer use English.
+
+The installer is not Windows code-signed; SmartScreen may warn. Check the source and checksum before deciding whether to run it.
 
 </details>
 
 <details>
-<summary><b>Проверка загрузки</b></summary>
+<summary><b>Verify your download</b></summary>
 
-Скачайте установщик и выполните:
+Download the installer and run:
 
 ```powershell
 cd $HOME\Downloads
@@ -107,14 +108,14 @@ gh attestation verify WinOTP-Setup.exe --repo sailxx/WinOTP
 Get-FileHash .\WinOTP-Setup.exe -Algorithm SHA256
 ```
 
-Сравните хеш со значением SHA-256 рядом с установщиком в списке файлов на GitHub. Подтверждение происхождения не заменяет подпись Windows и не гарантирует отсутствие уязвимостей. Старые релизы могут не содержать аттестацию.
+Compare the hash with the SHA-256 value next to the installer in the GitHub release asset list. Provenance is not Windows code signing or a guarantee of vulnerability-free code. Older releases may not include attestations.
 
 </details>
 
 <details>
-<summary><b>Сборка из исходников</b></summary>
+<summary><b>Build from source</b></summary>
 
-Нужны Windows, .NET SDK 10 и инструменты сборки WinUI. Замените путь в первой команде на папку проекта.
+Requires Windows, .NET SDK 10 and WinUI build tools. Replace the path in the first command with your project folder.
 
 ```cmd
 cd /d C:\path\to\WinOTP
@@ -122,24 +123,24 @@ dotnet run --project tests/OtpVectors/OtpVectors.csproj -c Release
 dotnet build src/WinOTP/WinOTP.csproj -c Release -p:Platform=x64 -warnaserror
 ```
 
-Порядок выпуска и обязательные проверки: [RELEASE.md](RELEASE.md). Изменения: [CHANGELOG.md](CHANGELOG.md). Графические плашки создаются командой `python tools/generate_readme.py` из корня проекта.
+Release gates and instructions: [RELEASE.md](RELEASE.md). Changes: [CHANGELOG.md](CHANGELOG.md). Generate the graphic panels with `python tools/generate_readme.py` from the project root.
 
 </details>
 
 <details>
-<summary><b>Известные ограничения</b></summary>
+<summary><b>Known limitations</b></summary>
 
-- Добавлена Linux-версия на Avalonia и подготовка пакетов deb, rpm и AppImage (x64); выпуск ожидает проверки на Linux и утверждения. [Сборка и ограничения](packaging/linux/README.md). macOS и облачной синхронизации нет.
-- На Linux сохранены компактная компоновка и цвета, но Mica Alt недоступен; используется тёмный фон и шрифт Inter. Пароль шифрует Linux-хранилище; перенос с Windows — через парольную `.winotp`-копию.
-- Mica зависит от версии Windows и системной политики прозрачности. Полная проверка смены обоев и разных масштабов ещё необходима.
-- MSIX-манифест — входной файл упаковки, а не подписанный и проверенный установочный пакет. Основной формат распространения — Inno Setup.
-- Состояние публикации и проверки каждого выпуска указаны в его описании; подготовленная локально версия не означает опубликованный релиз.
+- An Avalonia Linux frontend and x64 deb, rpm and AppImage recipes are prepared, pending Linux acceptance and approval. [Build and limitations](packaging/linux/README.md). No macOS or cloud sync.
+- Linux keeps the compact layout and colors with an opaque dark backdrop and bundled Inter; Windows Mica Alt is unavailable. The Linux password encrypts the vault. Transfer Windows accounts through a password-encrypted `.winotp` backup.
+- Mica depends on Windows version and transparency policy. Full wallpaper-change and multi-scale acceptance testing is still needed.
+- The MSIX manifest is a packaging input, not a signed, installation-tested package. Inno Setup is the distribution format.
+- Each release’s notes describe its publication and verification status. A prepared local version is not a published release.
 
 </details>
 
 <details>
-<summary><b>Об авторе и лицензии</b></summary>
+<summary><b>About and license</b></summary>
 
-WinOTP разрабатывает Влад ([sailxx](https://github.com/sailxx)). Исходный код распространяется по [лицензии MIT](LICENSE). Ошибки и предложения: [Issues](https://github.com/sailxx/WinOTP/issues).
+WinOTP is developed by Vlad ([sailxx](https://github.com/sailxx)). Source is available under the [MIT license](LICENSE). Bugs and suggestions: [Issues](https://github.com/sailxx/WinOTP/issues).
 
 </details>

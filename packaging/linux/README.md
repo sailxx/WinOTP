@@ -1,3 +1,5 @@
+**English** · [العربية](README.ar.md) · [简体中文](README.zh-CN.md) · [繁體中文](README.zh-TW.md) · [Čeština](README.cs.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Ελληνικά](README.el.md) · [Bahasa Indonesia](README.id.md) · [Gaeilge](README.ga.md) · [Italiano](README.it.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Polski](README.pl.md) · [Română](README.ro.md) · [Русский](README.ru.md) · [Español](README.es.md) · [Українська](README.uk.md) · [اردو](README.ur.md) · [ئۇيغۇرچە](README.ug.md) · [Tiếng Việt](README.vi.md)
+
 # Linux build and approval
 
 Targets x86_64 Linux, initially Ubuntu 24.04 and Fedora with .NET 10 native dependencies. The frontend is Avalonia; the Windows WinUI application is unchanged. Linux uses the same compact layout, cyan accents and a dark surface lightly tinted by the system accent (neutral fallback when unavailable): Windows Mica Alt and Segoe UI Variable are not portable. Inter is bundled; no Microsoft font is redistributed.
