@@ -1,8 +1,9 @@
 #define AppName "WinOTP"
-#define AppVersion "0.4.0"
+#define AppVersion "0.4.1"
 #define AppPublisher "sailxx"
 #define AppUrl "https://github.com/sailxx/WinOTP"
 #define AppExe "WinOTP.exe"
+#define DefaultInstallDir "{localappdata}\Programs\WinOTP"
 
 [Setup]
 AppId={{7F20345C-235C-4EC5-BA4B-6D46404A53A9}
@@ -12,13 +13,13 @@ AppPublisher={#AppPublisher}
 AppPublisherURL={#AppUrl}
 AppSupportURL={#AppUrl}/issues
 AppUpdatesURL={#AppUrl}/releases/latest
-DefaultDirName={localappdata}\Programs\WinOTP
+DefaultDirName={#DefaultInstallDir}
 DefaultGroupName=WinOTP
 UninstallDisplayIcon={app}\{#AppExe}
 SetupIconFile=..\src\WinOTP\Assets\WinOTP.ico
 OutputDir=..\artifacts
 OutputBaseFilename=WinOTP-Setup
-VersionInfoVersion=0.4.0.0
+VersionInfoVersion={#AppVersion}.0
 VersionInfoCompany={#AppPublisher}
 VersionInfoDescription=WinOTP Windows authenticator installer
 VersionInfoProductName=WinOTP
@@ -47,3 +48,15 @@ Name: "{autodesktop}\WinOTP"; Filename: "{app}\{#AppExe}"; WorkingDir: "{app}"; 
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "Launch WinOTP"; Flags: postinstall nowait skipifsilent
+
+[Code]
+procedure InitializeWizard;
+var
+  LegacyInstallDir: String;
+begin
+  // Keep custom destinations and switch upgrades from the former default folder.
+  LegacyInstallDir := ExpandConstant('{localappdata}\Programs\Mono');
+  if (ExpandConstant('{param:DIR|}') = '') and
+     (CompareText(RemoveBackslashUnlessRoot(WizardDirValue), LegacyInstallDir) = 0) then
+    WizardForm.DirEdit.Text := ExpandConstant('{#DefaultInstallDir}');
+end;

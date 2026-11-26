@@ -106,7 +106,7 @@ try:
     time.sleep(.5)
     fresh().child_window(title='Settings', control_type='MenuItem').invoke()
     time.sleep(.8)
-    assert fresh().child_window(title='Version 0.4.0', control_type='Text').exists()
+    assert fresh().child_window(title='Version 0.4.1', control_type='Text').exists()
     capture(fresh(), 'winotp-compact-settings.png')
     fresh().child_window(title='Cancel', control_type='Button').invoke()
     print('PASS: native launch, add account, hide/show, search, Import/Backup menu, settings version and screenshots.')
