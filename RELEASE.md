@@ -34,7 +34,7 @@ Version 0.4.0 is prepared in the project and installer. Do not publish until the
 4. Only AFTER the new release is usable, list all previous releases and tags. Archive any assets needed for recovery before deleting them. Remove every earlier release and its corresponding old tag; keep `v0.4.0`. Do not delete unrelated branches. GitHub release/tag deletion is irreversible and is not performed by CI automatically.
 5. Confirm the repository has exactly the new release and no old release tags. Confirm no open PRs remain.
 
-The local remote URL may still use GitHub's old redirect. Update it to `https://github.com/sailxx/WinOTP.git` in the IDE Git settings; the restricted Git tool cannot change remotes.
+The Git remote for WinOTP is `https://github.com/sailxx/WinOTP.git`.
 
 ## MSIX
 
