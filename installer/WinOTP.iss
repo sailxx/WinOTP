@@ -1,5 +1,5 @@
 #define AppName "WinOTP"
-#define AppVersion "0.4.1"
+#define AppVersion "0.4.2"
 #define AppPublisher "sailxx"
 #define AppUrl "https://github.com/sailxx/WinOTP"
 #define AppExe "WinOTP.exe"

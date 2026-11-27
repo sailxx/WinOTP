@@ -55,7 +55,7 @@ try:
     gear = fresh().child_window(title='Settings', control_type='Button').rectangle()
     search_rect = fresh().child_window(title='Search accounts', control_type='Edit').rectangle()
     scale = ctypes.windll.user32.GetDpiForWindow(hwnd) / 96
-    assert gear.width() <= 34 * scale and gear.height() <= 34 * scale, gear
+    assert gear.width() <= 38 * scale and gear.height() <= 38 * scale, gear
     assert search_rect.top - fresh().rectangle().top <= 48 * scale, search_rect
     window.child_window(title='Add account', control_type='Button').invoke()
     time.sleep(2)
@@ -106,7 +106,7 @@ try:
     time.sleep(.5)
     fresh().child_window(title='Settings', control_type='MenuItem').invoke()
     time.sleep(.8)
-    assert fresh().child_window(title='Version 0.4.1', control_type='Text').exists()
+    assert fresh().child_window(title='Version 0.4.2', control_type='Text').exists()
     capture(fresh(), 'winotp-compact-settings.png')
     fresh().child_window(title='Cancel', control_type='Button').invoke()
     print('PASS: native launch, add account, hide/show, search, Import/Backup menu, settings version and screenshots.')

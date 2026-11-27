@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.2 — Windows
+
+- Added an Acrylic backdrop option with live blur alongside the default wallpaper-tinted Mica.
+- Refined account cards, compact dialogs and the blue accent for primary buttons.
+- Smoothed the countdown bar and synchronized it with TOTP refresh.
+
 ## 0.4.0 — Unreleased
 
 - Linux Avalonia frontend with shared OTP/import code, compact dark layout, account management, URI/QR/backup import, favorites, clipboard timeout and password-encrypted storage.

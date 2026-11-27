@@ -5,10 +5,33 @@ on:
 permissions:
   contents: read
 jobs:
+  scope:
+    runs-on: ubuntu-24.04
+    outputs:
+      linux: ${{ steps.versions.outputs.linux }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - id: versions
+        shell: pwsh
+        run: |
+          $windows = [xml](Get-Content src/WinOTP/WinOTP.csproj -Raw)
+          $linux = [xml](Get-Content src/WinOTP.Linux/WinOTP.Linux.csproj -Raw)
+          $installer = Select-String -Path installer/WinOTP.iss -Pattern '^#define AppVersion "([^"]+)"$'
+          if ($env:GITHUB_REF_NAME -ne "v$($windows.Project.PropertyGroup.Version)" -or
+              $env:GITHUB_REF_NAME -ne "v$($installer.Matches.Groups[1].Value)") {
+            throw 'Tag must match the Windows project and installer versions.'
+          }
+          $includeLinux = $env:GITHUB_REF_NAME -eq "v$($linux.Project.PropertyGroup.Version)"
+          "linux=$($includeLinux.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
   linux:
+    needs: scope
+    if: needs.scope.outputs.linux == 'true'
     uses: ./.github/workflows/linux.yml
   release:
-    needs: linux
+    needs: [scope, linux]
+    if: ${{ !cancelled() && needs.scope.result == 'success' && (needs.linux.result == 'success' || needs.linux.result == 'skipped') }}
     runs-on: windows-latest
     timeout-minutes: 30
     permissions:
@@ -42,18 +65,30 @@ jobs:
         with:
           subject-path: artifacts/WinOTP-Setup.exe
       - uses: actions/download-artifact@v4
+        if: needs.scope.outputs.linux == 'true'
         with:
           name: linux-packages
           path: artifacts/linux-release
+      - name: Select release files
+        id: assets
+        shell: pwsh
+        env:
+          INCLUDE_LINUX: ${{ needs.scope.outputs.linux }}
+        run: |
+          $files = @('artifacts/WinOTP-Setup.exe')
+          if ($env:INCLUDE_LINUX -eq 'true') {
+            $files += @(
+              'artifacts/linux-release/*.deb'
+              'artifacts/linux-release/*.rpm'
+              'artifacts/linux-release/*.AppImage'
+              'artifacts/linux-release/linux-native.png'
+            )
+          }
+          @('files<<EOF') + $files + @('EOF') >> $env:GITHUB_OUTPUT
       - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           generate_release_notes: true
           prerelease: true
           draft: true
           fail_on_unmatched_files: true
-          files: |
-            artifacts/WinOTP-Setup.exe
-            artifacts/linux-release/*.deb
-            artifacts/linux-release/*.rpm
-            artifacts/linux-release/*.AppImage
-            artifacts/linux-release/linux-native.png
+          files: ${{ steps.assets.outputs.files }}

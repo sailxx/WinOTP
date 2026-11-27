@@ -7,6 +7,7 @@ public sealed class UserSettings
 {
     public bool HideCodes { get; set; }
     public bool CodeVisibilityConfigured { get; set; }
+    public bool UseAcrylicBackdrop { get; set; }
     public int ClipboardClearSeconds { get; set; } = 30;
     public int AutoLockMinutes { get; set; } = 5;
     public string? PasswordSalt { get; set; }

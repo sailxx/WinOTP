@@ -5,19 +5,23 @@
         <ResourceDictionary x:Key="Dark">
           <Color x:Key="SystemAccentColor">#60DDFF</Color>
           <Color x:Key="SystemAccentColorLight1">#69D2F8</Color>
-          <Color x:Key="SystemAccentColorLight2">#8DDFFA</Color>
+          <Color x:Key="SystemAccentColorLight2">#39D4FF</Color>
           <Color x:Key="SystemAccentColorLight3">#B2EBFC</Color>
           <SolidColorBrush x:Key="WinOTPAccentBrush" Color="#60DDFF"/>
           <SolidColorBrush x:Key="TextFillColorPrimaryBrush" Color="#FFFFFF"/>
           <SolidColorBrush x:Key="TextFillColorSecondaryBrush" Color="#CDCDCD"/>
           <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="#CDCDCD"/>
-          <SolidColorBrush x:Key="CardBackgroundFillColorDefaultBrush" Color="#202020"/>
-          <SolidColorBrush x:Key="ControlFillColorDefaultBrush" Color="#191919"/>
-          <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#232323"/>
-          <SolidColorBrush x:Key="ControlFillColorTertiaryBrush" Color="#141414"/>
-          <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="#303030"/>
-          <SolidColorBrush x:Key="ContentDialogBackground" Color="#101010"/>
-          <SolidColorBrush x:Key="ContentDialogSmokeFill" Color="#99000000"/>
+          <SolidColorBrush x:Key="CardBackgroundFillColorDefaultBrush" Color="#14FFFFFF"/>
+          <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="#1CFFFFFF"/>
+          <SolidColorBrush x:Key="ControlFillColorDefaultBrush" Color="#12FFFFFF"/>
+          <SolidColorBrush x:Key="ControlFillColorSecondaryBrush" Color="#22FFFFFF"/>
+          <SolidColorBrush x:Key="ControlFillColorTertiaryBrush" Color="#0BFFFFFF"/>
+          <SolidColorBrush x:Key="ControlStrokeColorDefaultBrush" Color="#26FFFFFF"/>
+          <SolidColorBrush x:Key="ContentDialogBackground" Color="#25282D"/>
+          <SolidColorBrush x:Key="ContentDialogSmokeFill" Color="#66000000"/>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="HighContrast">
+          <SolidColorBrush x:Key="WinOTPAccentBrush" Color="{ThemeResource SystemColorWindowTextColor}"/>
         </ResourceDictionary>
       </ResourceDictionary.ThemeDictionaries>
       <ResourceDictionary.MergedDictionaries>

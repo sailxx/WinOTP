@@ -1,11 +1,18 @@
+using System.Numerics;
+using Microsoft.UI.Composition;
+using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Automation;
+using Microsoft.UI.Xaml.Automation.Peers;
+using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage.Pickers;
 using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
+using Windows.UI.ViewManagement;
 using WinRT.Interop;
 using Microsoft.UI.Windowing;
 using Windows.Graphics;
@@ -22,17 +29,18 @@ public sealed partial class MainWindow : Window
     private readonly Vault _vault = new();
     private UserSettings _settings = UserSettings.Load();
     private List<Account> _accounts = [];
-    private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(500) };
+    private readonly DispatcherTimer _timer = new();
     private readonly Dictionary<Guid, (TextBlock Code, TextBlock Time)> _cardLabels = [];
     private readonly Dictionary<Guid, long> _codeSteps = [];
-    private readonly Dictionary<Guid, ProgressBar> _countdowns = [];
+    private readonly Dictionary<Guid, (Visual Fill, long Step)> _countdowns = [];
+    private readonly UISettings _systemSettings = new();
     private DateTime _lastActivity = DateTime.Now;
     private bool _locked;
     private bool _loadFailed;
     public MainWindow()
     {
         InitializeComponent();
-        SystemBackdrop = new MicaBackdrop { Kind = Microsoft.UI.Composition.SystemBackdrops.MicaKind.BaseAlt };
+        ApplyBackdrop();
         var windowHandle = WindowNative.GetWindowHandle(this);
         var appWindow = AppWindow.GetFromWindowId(Microsoft.UI.Win32Interop.GetWindowIdFromWindow(windowHandle));
         ExtendsContentIntoTitleBar = true;
@@ -54,6 +62,7 @@ public sealed partial class MainWindow : Window
         if (Content is UIElement root) { root.PointerPressed += (_, _) => Touch(); root.KeyDown += (_, _) => Touch(); }
         _timer.Tick += async (_, _) =>
         {
+            ScheduleCodeTick();
             try
             {
                 if (!_locked && _settings.HasPassword && _settings.AutoLockMinutes > 0 && DateTime.Now - _lastActivity >= TimeSpan.FromMinutes(_settings.AutoLockMinutes)) await LockAndUnlock();
@@ -61,14 +70,14 @@ public sealed partial class MainWindow : Window
             }
             catch (Exception ex) { LogStartup($"Timer action failed: {ex.GetType().Name}"); }
         };
-        _timer.Start();
+        ScheduleCodeTick();
         ((FrameworkElement)Content).Loaded += async (_, _) =>
         {
             try
             {
                 if (_settings.HasPassword) await Unlock();
                 else _accounts = _vault.Load();
-                RenderAccounts();
+                RenderAccounts(animateEntrance: true);
                 LogStartup("Initial account list rendered");
             }
             catch (Exception ex)
@@ -103,13 +112,45 @@ public sealed partial class MainWindow : Window
         catch { }
     }
 
-    private void RenderAccounts()
+    private void ApplyBackdrop()
+    {
+        SystemBackdrop = _settings.UseAcrylicBackdrop
+            ? new DesktopAcrylicBackdrop()
+            : new MicaBackdrop { Kind = MicaKind.BaseAlt };
+    }
+
+    private void ScheduleCodeTick()
+    {
+        // Check just after the half-second marks so a new OTP appears as its progress resets.
+        const int cadenceMs = 500;
+        const int boundaryGraceMs = 12;
+        var elapsedMs = DateTimeOffset.UtcNow.Millisecond % cadenceMs;
+        _timer.Stop();
+        _timer.Interval = TimeSpan.FromMilliseconds(cadenceMs - elapsedMs + boundaryGraceMs);
+        _timer.Start();
+    }
+
+    private void RenderAccounts(bool animateEntrance = false, Guid? addedAccountId = null)
     {
         var q = SearchBox.Text.Trim();
         var visible = _accounts.Where(a => q.Length == 0 || a.Issuer.Contains(q, StringComparison.OrdinalIgnoreCase) || a.Name.Contains(q, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(a => a.Favorite).ThenBy(a => a.Issuer).ThenBy(a => a.Name).ToList();
+        foreach (var countdown in _countdowns.Values) countdown.Fill.StopAnimation("Scale.X");
         AccountList.Children.Clear(); _cardLabels.Clear(); _codeSteps.Clear(); _countdowns.Clear();
-        foreach (var account in visible) AccountList.Children.Add(BuildCard(account));
+        var now = DateTimeOffset.UtcNow;
+        var animate = _systemSettings.AnimationsEnabled;
+        foreach (var account in visible)
+        {
+            var card = BuildCard(account, now);
+            if (animate && (animateEntrance || addedAccountId == account.Id))
+            {
+                card.Transitions = new TransitionCollection
+                {
+                    new EntranceThemeTransition { FromHorizontalOffset = 0, FromVerticalOffset = 6, IsStaggeringEnabled = false }
+                };
+            }
+            AccountList.Children.Add(card);
+        }
         if (visible.Count == 0)
         {
             var empty = new StackPanel { Spacing = 8, HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 100, 0, 0) };
@@ -119,23 +160,24 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private Border BuildCard(Account a)
+    private Border BuildCard(Account a, DateTimeOffset now)
     {
+        var seconds = now.ToUnixTimeSeconds();
         string code = "••••••"; string error = "";
-        try { code = Otp.Generate(a); } catch (Exception) { error = "Invalid account parameters"; }
+        try { code = Otp.Generate(a, seconds); } catch (Exception) { error = "Invalid account parameters"; }
         var isHotp = string.Equals(a.Type, "HOTP", StringComparison.OrdinalIgnoreCase);
-        var remaining = isHotp ? "Updated on copy" : a.Period > 0 ? $"Refreshes in {a.Period - DateTimeOffset.UtcNow.ToUnixTimeSeconds() % a.Period}s" : "Invalid TOTP period";
+        var remaining = isHotp ? "Updated on copy" : a.Period > 0 ? $"Refreshes in {a.Period - seconds % a.Period}s" : "Invalid TOTP period";
         var hasIssuer = !string.IsNullOrWhiteSpace(a.Issuer);
         var title = new TextBlock { Text = hasIssuer ? a.Issuer : a.Name, FontSize = 16, Foreground = Brush("#EEEEEE"), TextTrimming = TextTrimming.CharacterEllipsis };
         var name = new TextBlock { Text = a.Name, FontSize = 12, Foreground = Brush("#C4D4DE"), TextTrimming = TextTrimming.CharacterEllipsis };
-        var codeBlock = new TextBlock { Text = _settings.HideCodes ? new string('•', a.Digits) : code, FontFamily = new FontFamily("Segoe UI Variable"), FontSize = 28, CharacterSpacing = 100, Foreground = error.Length > 0 ? Brush("#B0B0B0") : Brush("#83E7FF"), VerticalAlignment = VerticalAlignment.Center };
-        var metadata = new StackPanel { Spacing = 2, MinHeight = 38, VerticalAlignment = VerticalAlignment.Top };
+        var codeBlock = new TextBlock { Text = _settings.HideCodes ? new string('•', a.Digits is 6 or 8 ? a.Digits : 6) : code, FontSize = 30, FontWeight = Microsoft.UI.Text.FontWeights.SemiBold, CharacterSpacing = 80, Foreground = error.Length > 0 ? Brush("#B0B0B0") : Brush("#83E7FF"), VerticalAlignment = VerticalAlignment.Center };
+        var metadata = new StackPanel { Spacing = 1, MinHeight = 36, VerticalAlignment = VerticalAlignment.Top };
         metadata.Children.Add(title);
         if (hasIssuer && !string.IsNullOrWhiteSpace(a.Name) && !string.Equals(a.Name, a.Issuer, StringComparison.Ordinal))
             metadata.Children.Add(name);
-        var timeBlock = new TextBlock { Text = error.Length > 0 ? error : remaining, FontSize = 10, Foreground = Brush("#B6CAD6") };
+        var timeBlock = new TextBlock { Text = error.Length > 0 ? error : remaining, FontSize = 11, Foreground = Brush("#A0A0A0") };
         _cardLabels[a.Id] = (codeBlock, timeBlock);
-        _codeSteps[a.Id] = isHotp ? a.Counter : a.Period > 0 ? DateTimeOffset.UtcNow.ToUnixTimeSeconds() / a.Period : long.MinValue;
+        _codeSteps[a.Id] = isHotp ? a.Counter : a.Period > 0 ? seconds / a.Period : long.MinValue;
         var actions = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 5, VerticalAlignment = VerticalAlignment.Center };
         var copy = new Button { Content = "Copy code", MinWidth = 88, Padding = new Thickness(8, 4, 8, 4), IsEnabled = error.Length == 0 };
         copy.Click += async (_, _) =>
@@ -149,7 +191,7 @@ public sealed partial class MainWindow : Window
                     if (a.Counter == long.MaxValue) throw new InvalidOperationException("HOTP counter has reached its maximum value.");
                     a.Counter++;
                     try { Save(); } catch { a.Counter--; throw; }
-                    RenderAccounts();
+                    UpdateCodes();
                 }
                 var package = new DataPackage(); package.SetText(current);
                 if (!Clipboard.SetContentWithOptions(package, new ClipboardContentOptions { IsAllowedInHistory = false, IsRoamable = false }))
@@ -178,7 +220,7 @@ public sealed partial class MainWindow : Window
             button.MinHeight = 32;
             button.VerticalAlignment = VerticalAlignment.Center;
         }
-        var body = new StackPanel { Spacing = 4, Margin = new Thickness(0, 10, 0, 10) };
+        var body = new StackPanel { Spacing = 3 };
         body.Children.Add(top);
         var codeRow = new Grid { ColumnSpacing = 16 };
         codeRow.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -189,33 +231,56 @@ public sealed partial class MainWindow : Window
         body.Children.Add(timeBlock);
         if (!isHotp && a.Period > 0 && error.Length == 0)
         {
-            var countdown = new ProgressBar
+            var fill = new Border { Style = (Style)RootGrid.Resources["CountdownFillStyle"] };
+            var track = new Border
             {
-                Minimum = 0, Maximum = a.Period,
-                Value = a.Period - DateTimeOffset.UtcNow.ToUnixTimeSeconds() % a.Period,
-                Height = 4, MinHeight = 4, IsHitTestVisible = false,
-                Foreground = (Microsoft.UI.Xaml.Media.Brush)Application.Current.Resources["WinOTPAccentBrush"],
-                Background = new SolidColorBrush(Microsoft.UI.ColorHelper.FromArgb(255, 100, 100, 100))
+                Style = (Style)RootGrid.Resources["CountdownTrackStyle"],
+                Child = fill,
+                IsHitTestVisible = false
             };
-            AutomationProperties.SetName(countdown, $"{a.Issuer} time remaining");
-            _countdowns[a.Id] = countdown;
-            body.Children.Add(countdown);
+            AutomationProperties.SetAccessibilityView(track, AccessibilityView.Raw);
+            body.Children.Add(track);
+            UpdateCountdown(a, ElementCompositionPreview.GetElementVisual(fill), now);
         }
-        return new Border { BorderBrush = Brush("#242424"), BorderThickness = new Thickness(0, 0, 0, 1), Child = body };
+        return new Border { Style = (Style)RootGrid.Resources["AccountCardStyle"], Child = body };
+    }
+
+    private void UpdateCountdown(Account account, Visual fill, DateTimeOffset now)
+    {
+        var seconds = now.ToUnixTimeSeconds();
+        var step = seconds / account.Period;
+        var remaining = account.Period - seconds % account.Period;
+        fill.StopAnimation("Scale.X");
+        // The bar displays fractional time even when decorative animations are disabled.
+        var duration = TimeSpan.FromSeconds(remaining) - TimeSpan.FromTicks(now.Ticks % TimeSpan.TicksPerSecond);
+        var fraction = (float)(duration.TotalSeconds / account.Period);
+        fill.Scale = new Vector3(fraction, 1, 1);
+        var compositor = fill.Compositor;
+        using var animation = compositor.CreateScalarKeyFrameAnimation();
+        using var linear = compositor.CreateLinearEasingFunction();
+        animation.Duration = duration < TimeSpan.FromMilliseconds(1) ? TimeSpan.FromMilliseconds(1) : duration;
+        animation.InsertKeyFrame(0, fraction);
+        animation.InsertKeyFrame(1, 0, linear);
+        fill.StartAnimation("Scale.X", animation);
+        _countdowns[account.Id] = (fill, step);
     }
 
     private async Task EditAccount(Account? edit = null)
     {
         if (_loadFailed || _locked) return;
         var issuer = Input("Service", edit?.Issuer ?? ""); var name = Input("Account / email", edit?.Name ?? "");
-        var secret = PasswordInput("Secret key (Base32)", 300); secret.Password = edit?.Secret ?? "";
-        var algo = new ComboBox { ItemsSource = new[] { "SHA1", "SHA256", "SHA512" }, SelectedItem = edit?.Algorithm ?? "SHA1", HorizontalAlignment = HorizontalAlignment.Stretch };
-        var digits = new ComboBox { ItemsSource = new[] { "6", "8" }, SelectedItem = (edit?.Digits ?? 6).ToString(), HorizontalAlignment = HorizontalAlignment.Stretch };
-        var period = Input("Period in seconds", (edit?.Period ?? 30).ToString());
-        var type = new ComboBox { ItemsSource = new[] { "TOTP", "HOTP" }, SelectedItem = edit?.Type ?? "TOTP", HorizontalAlignment = HorizontalAlignment.Stretch };
-        var form = new StackPanel { Spacing = 11, Width = 380 }; form.Children.Add(issuer); form.Children.Add(name); form.Children.Add(secret);
-        form.Children.Add(Label("Algorithm")); form.Children.Add(algo); form.Children.Add(Label("Digits")); form.Children.Add(digits); form.Children.Add(Label("Type")); form.Children.Add(type); form.Children.Add(Label("Period (TOTP)")); form.Children.Add(period);
-        var dialog = new ContentDialog { XamlRoot = Content.XamlRoot, Title = edit == null ? "Add account" : "Edit account", Content = form, PrimaryButtonText = "Save", CloseButtonText = "Cancel", DefaultButton = ContentDialogButton.Primary };
+        var secret = PasswordInput("Secret key (Base32)", 0); secret.Password = edit?.Secret ?? "";
+        var algo = new ComboBox { Header = "Algorithm", ItemsSource = new[] { "SHA1", "SHA256", "SHA512" }, SelectedItem = edit?.Algorithm ?? "SHA1", HorizontalAlignment = HorizontalAlignment.Stretch };
+        var digits = new ComboBox { Header = "Digits", ItemsSource = new[] { "6", "8" }, SelectedItem = (edit?.Digits ?? 6).ToString(), HorizontalAlignment = HorizontalAlignment.Stretch };
+        var period = Input("Period in seconds (TOTP)", (edit?.Period ?? 30).ToString());
+        var type = new ComboBox { Header = "Type", ItemsSource = new[] { "TOTP", "HOTP" }, SelectedItem = edit?.Type ?? "TOTP", HorizontalAlignment = HorizontalAlignment.Stretch };
+        var form = new StackPanel { Spacing = 10, Width = 332 };
+        form.Children.Add(issuer);
+        form.Children.Add(name);
+        form.Children.Add(secret);
+        form.Children.Add(FieldPair(algo, digits));
+        form.Children.Add(FieldPair(type, period));
+        var dialog = new ContentDialog { XamlRoot = Content.XamlRoot, Title = edit == null ? "Add account" : "Edit account", Content = new ScrollViewer { Content = form, VerticalScrollBarVisibility = ScrollBarVisibility.Auto }, PrimaryButtonText = "Save", CloseButtonText = "Cancel", DefaultButton = ContentDialogButton.Primary };
         if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
         try
         {
@@ -228,7 +293,7 @@ public sealed partial class MainWindow : Window
                 throw new FormatException("This account already exists.");
             var updated = _accounts.ToList();
             if (edit is null) updated.Add(account); else updated[updated.IndexOf(edit)] = account;
-            _vault.Save(updated); _accounts = updated; RenderAccounts();
+            _vault.Save(updated); _accounts = updated; RenderAccounts(addedAccountId: edit == null ? account.Id : null);
         }
         catch (Exception) { await ShowError("Account not saved", "Check the service, Base32 secret, algorithm and period, and ensure the vault is writable. Your existing account has not been changed."); }
         finally { secret.Password = ""; }
@@ -381,7 +446,8 @@ public sealed partial class MainWindow : Window
     private void Search_Changed(object sender, TextChangedEventArgs e) => RenderAccounts();
     private void UpdateCodes()
     {
-        var seconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var now = DateTimeOffset.UtcNow;
+        var seconds = now.ToUnixTimeSeconds();
         var visibilityChanged = _renderedHideCodes != _settings.HideCodes;
         foreach (var account in _accounts)
         {
@@ -392,12 +458,12 @@ public sealed partial class MainWindow : Window
                 var step = isHotp ? account.Counter : account.Period > 0 ? seconds / account.Period : long.MinValue;
                 if (visibilityChanged || !_codeSteps.TryGetValue(account.Id, out var previousStep) || step != previousStep)
                 {
-                    labels.Code.Text = _settings.HideCodes ? new string('•', account.Digits is 6 or 8 ? account.Digits : 6) : Otp.Generate(account);
+                    labels.Code.Text = _settings.HideCodes ? new string('•', account.Digits is 6 or 8 ? account.Digits : 6) : Otp.Generate(account, seconds);
                     _codeSteps[account.Id] = step;
                 }
                 labels.Time.Text = isHotp ? "Updated on copy" : account.Period > 0 ? $"Refreshes in {account.Period - seconds % account.Period}s" : "Invalid TOTP period";
-                if (_countdowns.TryGetValue(account.Id, out var countdown) && account.Period > 0)
-                    countdown.Value = account.Period - seconds % account.Period;
+                if (_countdowns.TryGetValue(account.Id, out var countdown) && countdown.Step != step)
+                    UpdateCountdown(account, countdown.Fill, now);
             }
             catch (Exception) { labels.Code.Text = "••••••"; labels.Time.Text = "Invalid account parameters"; }
         }
@@ -408,11 +474,24 @@ public sealed partial class MainWindow : Window
     private async void Settings_Click(object sender, RoutedEventArgs e)
     {
         Touch(); var hide = new CheckBox { Content = "Hide OTP codes", IsChecked = _settings.HideCodes };
-        var clear = new ComboBox { ItemsSource = new[] { "Never", "15 seconds", "30 seconds", "60 seconds" }, SelectedIndex = _settings.ClipboardClearSeconds switch { 15 => 1, 30 => 2, 60 => 3, _ => 0 }, HorizontalAlignment = HorizontalAlignment.Stretch };
-        var idle = new ComboBox { ItemsSource = new[] { "Never", "1 minute", "5 minutes", "10 minutes", "15 minutes" }, SelectedIndex = _settings.AutoLockMinutes switch { 1 => 1, 5 => 2, 10 => 3, 15 => 4, _ => 0 }, HorizontalAlignment = HorizontalAlignment.Stretch };
-        var pass = PasswordInput(_settings.HasPassword ? "New password (leave blank to keep)" : "Master password (optional)", 340);
+        var backdrop = new ComboBox
+        {
+            Header = "Window background",
+            ItemsSource = new[] { "Mica · wallpaper tint", "Acrylic · live blur" },
+            SelectedIndex = _settings.UseAcrylicBackdrop ? 1 : 0,
+            HorizontalAlignment = HorizontalAlignment.Stretch
+        };
+        var clear = new ComboBox { Header = "Clear clipboard after", ItemsSource = new[] { "Never", "15 seconds", "30 seconds", "60 seconds" }, SelectedIndex = _settings.ClipboardClearSeconds switch { 15 => 1, 30 => 2, 60 => 3, _ => 0 }, HorizontalAlignment = HorizontalAlignment.Stretch };
+        var idle = new ComboBox { Header = "Lock after inactivity", ItemsSource = new[] { "Never", "1 minute", "5 minutes", "10 minutes", "15 minutes" }, SelectedIndex = _settings.AutoLockMinutes switch { 1 => 1, 5 => 2, 10 => 3, 15 => 4, _ => 0 }, HorizontalAlignment = HorizontalAlignment.Stretch };
+        var pass = PasswordInput(_settings.HasPassword ? "New password (leave blank to keep)" : "Master password (optional)", 0);
         var clearPass = new CheckBox { Content = "Remove master password", Visibility = _settings.HasPassword ? Visibility.Visible : Visibility.Collapsed };
-        var form = new StackPanel { Spacing = 12 }; form.Children.Add(hide); form.Children.Add(Label("Clear clipboard after copying")); form.Children.Add(clear); form.Children.Add(Label("Lock after inactivity")); form.Children.Add(idle); form.Children.Add(Label("The master password locks the app interface")); form.Children.Add(pass); form.Children.Add(clearPass);
+        var form = new StackPanel { Spacing = 10, Width = 332 };
+        form.Children.Add(backdrop);
+        form.Children.Add(hide);
+        form.Children.Add(FieldPair(clear, idle));
+        form.Children.Add(pass);
+        form.Children.Add(Label("The master password locks the app interface"));
+        form.Children.Add(clearPass);
         var version = typeof(App).Assembly.GetName().Version;
         form.Children.Add(new Border { Height = 1, Background = Brush("#242424"), Margin = new Thickness(0, 8, 0, 0) });
         form.Children.Add(new TextBlock { Text = version is null ? "Version unavailable" : $"Version {version.Major}.{version.Minor}.{Math.Max(version.Build, 0)}", FontSize = 12, Foreground = Brush("#A0A0A0"), Margin = new Thickness(0, 4, 0, 0) });
@@ -423,9 +502,16 @@ public sealed partial class MainWindow : Window
             await ShowError("Password too short", "The master password must contain at least 8 characters.");
             return;
         }
+        var useAcrylic = backdrop.SelectedIndex == 1;
+        var backdropChanged = useAcrylic != _settings.UseAcrylicBackdrop;
+        _settings.UseAcrylicBackdrop = useAcrylic;
         _settings.HideCodes = hide.IsChecked == true; _settings.ClipboardClearSeconds = clear.SelectedIndex switch { 1 => 15, 2 => 30, 3 => 60, _ => 0 }; _settings.AutoLockMinutes = idle.SelectedIndex switch { 1 => 1, 2 => 5, 3 => 10, 4 => 15, _ => 0 };
         if (clearPass.IsChecked == true) { _settings.PasswordSalt = null; _settings.PasswordHash = null; } else if (!string.IsNullOrWhiteSpace(pass.Password)) _settings.SetPassword(pass.Password);
-        _settings.Save(); _lastActivity = DateTime.Now; ShowCodesButton.Content = _settings.HideCodes ? "Show codes" : "Hide codes"; RenderAccounts();
+        _settings.Save();
+        if (backdropChanged) ApplyBackdrop();
+        _lastActivity = DateTime.Now;
+        ShowCodesButton.Content = _settings.HideCodes ? "Show codes" : "Hide codes";
+        UpdateCodes();
     }
     private void Touch() => _lastActivity = DateTime.Now;
     private async Task ClearClipboardAfter(string expected, int seconds)
@@ -494,5 +580,15 @@ public sealed partial class MainWindow : Window
     private static TextBox Input(string placeholder, string value) => new() { Header = placeholder, Text = value };
     private static PasswordBox PasswordInput(string placeholder, double minWidth) => new() { Header = placeholder, MinWidth = minWidth };
     private static TextBlock Label(string text) => new() { Text = text, FontSize = 13, Foreground = Brush("#777777") };
+    private static Grid FieldPair(FrameworkElement left, FrameworkElement right)
+    {
+        var row = new Grid { ColumnSpacing = 12 };
+        row.ColumnDefinitions.Add(new ColumnDefinition());
+        row.ColumnDefinitions.Add(new ColumnDefinition());
+        Grid.SetColumn(right, 1);
+        row.Children.Add(left);
+        row.Children.Add(right);
+        return row;
+    }
     private async Task ShowError(string title, string message) { await new ContentDialog { XamlRoot = Content.XamlRoot, Title = title, Content = message, CloseButtonText = "OK" }.ShowAsync(); }
 }

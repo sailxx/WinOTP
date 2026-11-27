@@ -26,13 +26,9 @@ cd /d C:\Users\Vlad\sx\winotp
 
 ## GitHub publication
 
-Version 0.4.0 is prepared in the project and installer. Do not publish until the above gates pass AND Vlad approves the Linux screenshots. Source changes do not publish a release. The Release workflow now waits for Linux packages and creates only a draft containing Windows Setup, deb, rpm and AppImage. See [Linux build and acceptance](packaging/linux/README.md). No release or tag deletion is authorized by the current Linux task; the historical cleanup steps below are not automatic authorization.
-
-1. Review and commit the changes; push the approved commit to `sailxx/WinOTP`.
-2. Create and push tag `v0.4.0` on that commit using GitHub or a trusted Git client. The Release workflow builds the installer and its provenance attestation. GitHub shows SHA-256 digests for release assets.
-3. Download and verify the new installer, then install and launch it on Windows 11. Confirm the release points at the tested commit.
-4. Only AFTER the new release is usable, list all previous releases and tags. Archive any assets needed for recovery before deleting them. Remove every earlier release and its corresponding old tag; keep `v0.4.0`. Do not delete unrelated branches. GitHub release/tag deletion is irreversible and is not performed by CI automatically.
-5. Confirm the repository has exactly the new release and no old release tags. Confirm no open PRs remain.
+1. Match the Windows project and installer versions, then push the reviewed commit and its matching `v<version>` tag to `sailxx/WinOTP`.
+2. The Release workflow builds and attests the Windows installer and creates a draft. If the tag also matches the Linux project version, the draft includes Linux packages and a screenshot. Review the Linux output with Vlad before publishing those assets. See [Linux build and acceptance](packaging/linux/README.md).
+3. Download the Windows installer, verify its GitHub asset digest, and check installation and launch on Windows 11. Confirm the release points to the tested commit before publishing.
 
 The Git remote for WinOTP is `https://github.com/sailxx/WinOTP.git`.
 
